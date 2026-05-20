@@ -33,22 +33,22 @@ type StoredRoomType = {
   id: number;
   hotelId: number;
   name: string;
-  price: number;
+  price: string;
   createdAt: Date;
   updatedAt: Date;
 };
 
-type HotelResponse = Omit<StoredHotel, 'openedAt' | 'createdAt' | 'updatedAt'> & {
+type HotelResponse = Omit<
+  StoredHotel,
+  'openedAt' | 'createdAt' | 'updatedAt'
+> & {
   openedAt: string;
   createdAt: string;
   updatedAt: string;
   roomTypes: RoomTypeResponse[];
 };
 
-type RoomTypeResponse = Omit<
-  StoredRoomType,
-  'createdAt' | 'updatedAt'
-> & {
+type RoomTypeResponse = Omit<StoredRoomType, 'createdAt' | 'updatedAt'> & {
   createdAt: string;
   updatedAt: string;
 };
@@ -70,10 +70,7 @@ type LoginBody = {
   user: PublicUser;
 };
 
-type HotelCreateData = Omit<
-  StoredHotel,
-  'id' | 'createdAt' | 'updatedAt'
->;
+type HotelCreateData = Omit<StoredHotel, 'id' | 'createdAt' | 'updatedAt'>;
 
 type HotelUpdateData = Partial<
   Omit<StoredHotel, 'id' | 'createdAt' | 'updatedAt'>
@@ -81,17 +78,21 @@ type HotelUpdateData = Partial<
 
 type RoomTypeCreateData = Omit<
   StoredRoomType,
-  'id' | 'createdAt' | 'updatedAt'
->;
+  'id' | 'price' | 'createdAt' | 'updatedAt'
+> & {
+  price: number | string;
+};
+
+type RoomTypePayload = Omit<RoomTypeCreateData, 'hotelId'>;
 
 type RoomTypeUpdateData = Partial<
   Omit<StoredRoomType, 'id' | 'createdAt' | 'updatedAt'>
 >;
 
 const firstHotelPayload = {
-  nameCn: '西湖湖畔酒店',
+  nameCn: 'West Lake Hotel CN',
   nameEn: 'West Lake Hotel',
-  address: '杭州市西湖区北山街1号',
+  address: 'No. 1 Beishan Street, Hangzhou',
   starRating: 5,
   openedAt: '2020-01-01T00:00:00.000Z',
   imageUrl: 'https://example.com/west-lake.jpg',
@@ -99,9 +100,9 @@ const firstHotelPayload = {
 };
 
 const secondHotelPayload = {
-  nameCn: '外滩精品酒店',
+  nameCn: 'Bund Boutique Hotel CN',
   nameEn: 'Bund Boutique Hotel',
-  address: '上海市黄浦区中山东一路2号',
+  address: 'No. 2 Zhongshan East 1st Road, Shanghai',
   starRating: 4,
   openedAt: '2021-03-15T00:00:00.000Z',
   imageUrl: null,
@@ -120,6 +121,53 @@ function createPrismaMock() {
     ...hotel,
     roomTypes: roomTypes.filter((roomType) => roomType.hotelId === hotel.id),
   });
+
+  const findHotel = (
+    where?: Partial<Pick<StoredHotel, 'id' | 'merchantId' | 'status'>>,
+  ) =>
+    hotels.find((item) => {
+      if (where?.id !== undefined && item.id !== where.id) {
+        return false;
+      }
+
+      if (
+        where?.merchantId !== undefined &&
+        item.merchantId !== where.merchantId
+      ) {
+        return false;
+      }
+
+      if (where?.status !== undefined && item.status !== where.status) {
+        return false;
+      }
+
+      return true;
+    });
+
+  const findRoomType = (where: {
+    id?: number;
+    hotelId?: number;
+    hotelId_name?: { hotelId: number; name: string };
+  }) =>
+    roomTypes.find((item) => {
+      if (where.id !== undefined && item.id !== where.id) {
+        return false;
+      }
+
+      if (where.hotelId !== undefined && item.hotelId !== where.hotelId) {
+        return false;
+      }
+
+      if (
+        where.hotelId_name !== undefined &&
+        (item.hotelId !== where.hotelId_name.hotelId ||
+          item.name !== where.hotelId_name.name)
+      ) {
+        return false;
+      }
+
+      return true;
+    });
 
   return {
     user: {
@@ -204,6 +252,25 @@ function createPrismaMock() {
           );
         },
       ),
+      findUnique: jest.fn(
+        ({
+          where,
+          include,
+        }: {
+          where: { id: number };
+          include?: { roomTypes?: boolean };
+        }) => {
+          const hotel = findHotel(where);
+
+          return Promise.resolve(
+            hotel
+              ? include?.roomTypes
+                ? includeRoomTypes(hotel)
+                : hotel
+              : null,
+          );
+        },
+      ),
       findFirst: jest.fn(
         ({
           where,
@@ -212,23 +279,14 @@ function createPrismaMock() {
           where?: Partial<Pick<StoredHotel, 'id' | 'merchantId'>>;
           include?: { roomTypes?: boolean };
         }) => {
-          const hotel = hotels.find((item) => {
-            if (where?.id !== undefined && item.id !== where.id) {
-              return false;
-            }
-
-            if (
-              where?.merchantId !== undefined &&
-              item.merchantId !== where.merchantId
-            ) {
-              return false;
-            }
-
-            return true;
-          });
+          const hotel = findHotel(where);
 
           return Promise.resolve(
-            hotel ? (include?.roomTypes ? includeRoomTypes(hotel) : hotel) : null,
+            hotel
+              ? include?.roomTypes
+                ? includeRoomTypes(hotel)
+                : hotel
+              : null,
           );
         },
       ),
@@ -268,7 +326,7 @@ function createPrismaMock() {
         const roomType = {
           id: nextRoomTypeId,
           ...data,
-          price: Number(data.price),
+          price: formatMoney(data.price),
           createdAt: now,
           updatedAt: now,
         };
@@ -282,23 +340,50 @@ function createPrismaMock() {
           where,
           include,
         }: {
-          where: { id?: number; hotelId_name?: { hotelId: number; name: string } };
+          where: {
+            id?: number;
+            hotelId_name?: { hotelId: number; name: string };
+          };
           include?: { hotel?: boolean };
         }) => {
-          const roomType =
-            where.id !== undefined
-              ? roomTypes.find((item) => item.id === where.id)
-              : roomTypes.find(
-                  (item) =>
-                    item.hotelId === where.hotelId_name?.hotelId &&
-                    item.name === where.hotelId_name?.name,
-                );
+          const roomType = findRoomType(where);
 
           if (!roomType) {
             return Promise.resolve(null);
           }
 
           const hotel = hotels.find((item) => item.id === roomType.hotelId);
+
+          return Promise.resolve(
+            include?.hotel ? { ...roomType, hotel: hotel ?? null } : roomType,
+          );
+        },
+      ),
+      findFirst: jest.fn(
+        ({
+          where,
+          include,
+        }: {
+          where: {
+            id?: number;
+            hotelId?: number;
+            hotel?: { merchantId?: number };
+          };
+          include?: { hotel?: boolean };
+        }) => {
+          const roomType = findRoomType(where);
+
+          if (!roomType) {
+            return Promise.resolve(null);
+          }
+
+          const hotel = hotels.find((item) => item.id === roomType.hotelId);
+          if (
+            where.hotel?.merchantId !== undefined &&
+            hotel?.merchantId !== where.hotel.merchantId
+          ) {
+            return Promise.resolve(null);
+          }
 
           return Promise.resolve(
             include?.hotel ? { ...roomType, hotel: hotel ?? null } : roomType,
@@ -321,11 +406,27 @@ function createPrismaMock() {
           Object.assign(roomType, {
             ...data,
             price:
-              data.price !== undefined ? Number(data.price) : roomType.price,
+              data.price !== undefined
+                ? formatMoney(data.price)
+                : roomType.price,
             updatedAt: new Date(),
           });
 
           return Promise.resolve(roomType);
+        },
+      ),
+    },
+    __testing: {
+      setHotelReviewState: jest.fn(
+        (id: number, status: HotelStatus, rejectReason: string | null) => {
+          const hotel = hotels.find((item) => item.id === id);
+          if (!hotel) {
+            throw new Error('Hotel not found');
+          }
+
+          hotel.status = status;
+          hotel.rejectReason = rejectReason;
+          hotel.updatedAt = new Date();
         },
       ),
     },
@@ -336,16 +437,19 @@ function createPrismaMock() {
 
 describe('Merchant hotel management (e2e)', () => {
   let app: INestApplication<App>;
+  let prismaMock: ReturnType<typeof createPrismaMock>;
 
   beforeEach(async () => {
     process.env.AUTH_TOKEN_SECRET = 'test-auth-secret';
     process.env.AUTH_TOKEN_EXPIRES_IN_SECONDS = '3600';
 
+    prismaMock = createPrismaMock();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideProvider(PrismaService)
-      .useValue(createPrismaMock())
+      .useValue(prismaMock)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -372,10 +476,13 @@ describe('Merchant hotel management (e2e)', () => {
           message: 'success',
           data: {
             id: 1,
-            ...firstHotelPayload,
+            nameCn: firstHotelPayload.nameCn,
+            nameEn: firstHotelPayload.nameEn,
+            address: firstHotelPayload.address,
+            starRating: firstHotelPayload.starRating,
+            openedAt: firstHotelPayload.openedAt,
             status: HotelStatus.PENDING_REVIEW,
             rejectReason: null,
-            merchantId: 1,
             roomTypes: [],
           },
         });
@@ -429,7 +536,6 @@ describe('Merchant hotel management (e2e)', () => {
               nameCn: firstHotelPayload.nameCn,
               status: HotelStatus.PENDING_REVIEW,
               rejectReason: null,
-              merchantId: 1,
               roomTypes: [],
             },
           ],
@@ -451,7 +557,7 @@ describe('Merchant hotel management (e2e)', () => {
       .set('Authorization', `Bearer ${otherMerchantToken}`)
       .send({
         ...firstHotelPayload,
-        nameCn: '无权编辑的酒店',
+        nameCn: 'Unauthorized Hotel Edit',
       })
       .expect(404)
       .expect(({ body }) => {
@@ -467,13 +573,18 @@ describe('Merchant hotel management (e2e)', () => {
   it('allows the owning MERCHANT to edit a hotel and reset it to pending review with no reject reason', async () => {
     const merchantToken = await registerAndLogin('merchant01', Role.MERCHANT);
     const hotel = await createHotel(merchantToken, firstHotelPayload);
+    prismaMock.__testing.setHotelReviewState(
+      hotel.id,
+      HotelStatus.REJECTED,
+      'Missing license document',
+    );
 
     await request(app.getHttpServer())
       .patch(`/hotels/${hotel.id}`)
       .set('Authorization', `Bearer ${merchantToken}`)
       .send({
         ...firstHotelPayload,
-        nameCn: '西湖湖畔酒店二期',
+        nameCn: 'West Lake Hotel Phase 2',
         starRating: 4,
       })
       .expect(200)
@@ -485,7 +596,7 @@ describe('Merchant hotel management (e2e)', () => {
           message: 'success',
           data: {
             id: hotel.id,
-            nameCn: '西湖湖畔酒店二期',
+            nameCn: 'West Lake Hotel Phase 2',
             starRating: 4,
             status: HotelStatus.PENDING_REVIEW,
             rejectReason: null,
@@ -517,7 +628,7 @@ describe('Merchant hotel management (e2e)', () => {
         id: 1,
         hotelId: hotel.id,
         name: 'Deluxe King',
-        price: 888,
+        price: '888.00',
       },
     });
 
@@ -539,7 +650,7 @@ describe('Merchant hotel management (e2e)', () => {
             id: createBody.data.id,
             hotelId: hotel.id,
             name: 'Executive King',
-            price: 988,
+            price: '988.00',
           },
         });
       });
@@ -668,7 +779,7 @@ describe('Merchant hotel management (e2e)', () => {
 
   async function createRoomType(
     token: string,
-    payload: { hotelId: number; name: string; price: number },
+    payload: { hotelId: number } & RoomTypePayload,
   ) {
     const response = await request(app.getHttpServer())
       .post('/rooms')
@@ -679,3 +790,7 @@ describe('Merchant hotel management (e2e)', () => {
     return (response.body as ApiEnvelope<RoomTypeResponse>).data;
   }
 });
+
+function formatMoney(value: number | string) {
+  return Number(value).toFixed(2);
+}
