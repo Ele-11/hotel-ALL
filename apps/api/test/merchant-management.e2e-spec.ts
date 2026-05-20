@@ -169,7 +169,7 @@ function createPrismaMock() {
       return true;
     });
 
-  return {
+  const prismaMock = {
     user: {
       create: jest.fn(({ data }: { data: Omit<StoredUser, 'id'> }) => {
         const existing = users.find((user) => user.username === data.username);
@@ -482,6 +482,14 @@ function createPrismaMock() {
     },
     onModuleInit: jest.fn(),
     onModuleDestroy: jest.fn(),
+  };
+
+  return {
+    ...prismaMock,
+    $transaction: jest.fn(
+      (callback: (transaction: typeof prismaMock) => unknown) =>
+        callback(prismaMock),
+    ),
   };
 }
 
@@ -911,6 +919,34 @@ describe('Merchant hotel management (e2e)', () => {
           data: null,
         });
       });
+  });
+
+  it('returns 400 for non-numeric room ids and prices before creating a room', async () => {
+    const merchantToken = await registerAndLogin('merchant01', Role.MERCHANT);
+    const hotel = await createHotel(merchantToken, firstHotelPayload);
+
+    const invalidPayloads = [
+      { hotelId: true, name: 'Bad Boolean Room', price: true },
+      { hotelId: [hotel.id], name: 'Bad Array Room', price: [888] },
+      { hotelId: hotel.id, name: 'Bad Precision Room', price: 12.345 },
+      { hotelId: hotel.id, name: 'Bad Range Room', price: 100000000 },
+    ];
+
+    for (const payload of invalidPayloads) {
+      await request(app.getHttpServer())
+        .post('/rooms')
+        .set('Authorization', `Bearer ${merchantToken}`)
+        .send(payload)
+        .expect(400)
+        .expect(({ body }) => {
+          const responseBody = body as ApiEnvelope<null>;
+
+          expect(responseBody).toMatchObject({
+            code: 400,
+            data: null,
+          });
+        });
+    }
   });
 
   it('returns 409 when a MERCHANT creates or edits a duplicate room type name under the same hotel', async () => {

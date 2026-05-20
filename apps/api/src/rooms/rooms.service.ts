@@ -18,19 +18,24 @@ export class RoomsService {
 
   async create(merchantId: number, dto: RoomDto) {
     const data = normalizeRoomCreateDto(dto);
-    const hotel = await this.prisma.hotel.findFirst({
-      where: { id: data.hotelId, merchantId },
-    });
-
-    if (!hotel) {
-      throw new NotFoundException('Hotel not found');
-    }
 
     try {
-      const room = await this.prisma.roomType.create({
-        data,
+      const room = await this.prisma.$transaction(async (tx) => {
+        const hotel = await tx.hotel.findFirst({
+          where: { id: data.hotelId, merchantId },
+        });
+
+        if (!hotel) {
+          throw new NotFoundException('Hotel not found');
+        }
+
+        const createdRoom = await tx.roomType.create({
+          data,
+        });
+        await this.resetHotelReviewState(tx, data.hotelId);
+
+        return createdRoom;
       });
-      await this.resetHotelReviewState(data.hotelId);
 
       return formatRoom(room);
     } catch (error: unknown) {
@@ -45,21 +50,26 @@ export class RoomsService {
   async update(idValue: string, merchantId: number, dto: RoomDto) {
     const id = parseId(idValue, 'room id');
     const data = normalizeRoomUpdateDto(dto);
-    const existing = await this.prisma.roomType.findUnique({
-      where: { id },
-      include: { hotel: true },
-    });
-
-    if (!existing || existing.hotel?.merchantId !== merchantId) {
-      throw new NotFoundException('Room type not found');
-    }
 
     try {
-      const room = await this.prisma.roomType.update({
-        where: { id },
-        data,
+      const room = await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.roomType.findUnique({
+          where: { id },
+          include: { hotel: true },
+        });
+
+        if (!existing || existing.hotel?.merchantId !== merchantId) {
+          throw new NotFoundException('Room type not found');
+        }
+
+        const updatedRoom = await tx.roomType.update({
+          where: { id },
+          data,
+        });
+        await this.resetHotelReviewState(tx, existing.hotelId);
+
+        return updatedRoom;
       });
-      await this.resetHotelReviewState(existing.hotelId);
 
       return formatRoom(room);
     } catch (error: unknown) {
@@ -71,8 +81,11 @@ export class RoomsService {
     }
   }
 
-  private async resetHotelReviewState(hotelId: number) {
-    await this.prisma.hotel.update({
+  private async resetHotelReviewState(
+    tx: Prisma.TransactionClient,
+    hotelId: number,
+  ) {
+    await tx.hotel.update({
       where: { id: hotelId },
       data: {
         status: HotelStatus.PENDING_REVIEW,
@@ -111,9 +124,20 @@ function parseId(value: string, fieldName: string): number {
 }
 
 function normalizePositiveInteger(value: unknown, fieldName: string): number {
-  const normalized = typeof value === 'number' ? value : Number(value);
+  if (typeof value === 'number') {
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new BadRequestException(`${fieldName} must be a positive integer`);
+    }
 
-  if (!Number.isInteger(normalized) || normalized <= 0) {
+    return value;
+  }
+
+  if (typeof value !== 'string' || !/^[1-9]\d*$/.test(value)) {
+    throw new BadRequestException(`${fieldName} must be a positive integer`);
+  }
+
+  const normalized = Number(value);
+  if (!Number.isSafeInteger(normalized)) {
     throw new BadRequestException(`${fieldName} must be a positive integer`);
   }
 
@@ -137,10 +161,23 @@ function normalizePositiveFiniteNumber(
   value: unknown,
   fieldName: string,
 ): number {
-  const normalized = typeof value === 'number' ? value : Number(value);
+  const text = typeof value === 'number' ? String(value) : value;
 
-  if (!Number.isFinite(normalized) || normalized <= 0) {
-    throw new BadRequestException(`${fieldName} must be greater than 0`);
+  if (typeof text !== 'string' || !/^(0|[1-9]\d*)(\.\d{1,2})?$/.test(text)) {
+    throw new BadRequestException(
+      `${fieldName} must be a positive decimal with up to 2 decimal places`,
+    );
+  }
+
+  const normalized = Number(text);
+  if (
+    !Number.isFinite(normalized) ||
+    normalized <= 0 ||
+    normalized > 99999999.99
+  ) {
+    throw new BadRequestException(
+      `${fieldName} must be greater than 0 and at most 99999999.99`,
+    );
   }
 
   return normalized;
