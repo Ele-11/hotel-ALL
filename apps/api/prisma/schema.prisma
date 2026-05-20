@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MERCHANT
+  ADMIN
+}
+
+enum HotelStatus {
+  PENDING_REVIEW
+  REJECTED
+  APPROVED
+  PUBLISHED
+  OFFLINE
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  username    String    @unique
+  password    String
+  role        Role      @default(USER)
+  ownedHotels Hotel[]   @relation("MerchantHotels")
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Hotel {
+  id           Int         @id @default(autoincrement())
+  nameCn       String
+  nameEn       String      @unique
+  address      String
+  starRating   Int
+  openedAt     DateTime
+  imageUrl     String?
+  facilities   String[]    @default([])
+  status       HotelStatus @default(PENDING_REVIEW)
+  rejectReason String?
+  merchantId   Int
+  merchant     User        @relation("MerchantHotels", fields: [merchantId], references: [id])
+  roomTypes    RoomType[]
+  bookings     Booking[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([merchantId])
+  @@index([status])
+}
+
+model RoomType {
+  id        Int       @id @default(autoincrement())
+  hotelId   Int
+  hotel     Hotel     @relation(fields: [hotelId], references: [id])
+  name      String
+  price     Decimal   @db.Decimal(10, 2)
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([hotelId, name])
+  @@index([hotelId])
+}
+
+model Booking {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+  hotelId      Int
+  hotel        Hotel    @relation(fields: [hotelId], references: [id])
+  roomTypeId   Int
+  roomType     RoomType @relation(fields: [roomTypeId], references: [id])
+  checkInDate  DateTime
+  checkOutDate DateTime
+  guestCount   Int
+  totalPrice   Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([hotelId])
+  @@index([roomTypeId])
+}

@@ -1,0 +1,17 @@
+{
+  "name": "hotel-all",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.10.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @hotel/web --filter @hotel/api dev",
+    "dev:web": "pnpm --filter @hotel/web dev",
+    "dev:api": "pnpm --filter @hotel/api dev",
+    "build": "pnpm -r build",
+    "build:web": "pnpm --filter @hotel/web build",
+    "build:api": "pnpm --filter @hotel/api build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test"
+  }
+}
