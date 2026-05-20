@@ -209,6 +209,15 @@ function createPrismaMock() {
           data: HotelCreateData;
           include?: { roomTypes?: boolean };
         }) => {
+          const existing = hotels.find((hotel) => hotel.nameEn === data.nameEn);
+          if (existing) {
+            const error = new Error('Unique constraint failed') as Error & {
+              code?: string;
+            };
+            error.code = 'P2002';
+            throw error;
+          }
+
           const now = new Date();
           const hotel = {
             id: nextHotelId,
@@ -303,6 +312,19 @@ function createPrismaMock() {
           const hotel = hotels.find((item) => item.id === where.id);
           if (!hotel) {
             throw new Error('Hotel not found');
+          }
+
+          if (data.nameEn !== undefined) {
+            const existing = hotels.find(
+              (item) => item.id !== where.id && item.nameEn === data.nameEn,
+            );
+            if (existing) {
+              const error = new Error('Unique constraint failed') as Error & {
+                code?: string;
+              };
+              error.code = 'P2002';
+              throw error;
+            }
           }
 
           Object.assign(hotel, {
@@ -603,6 +625,101 @@ describe('Merchant hotel management (e2e)', () => {
             roomTypes: [],
           },
         });
+      });
+  });
+
+  it('returns 409 when a MERCHANT creates or edits a hotel with a duplicate English name', async () => {
+    const merchantToken = await registerAndLogin('merchant01', Role.MERCHANT);
+    const firstHotel = await createHotel(merchantToken, firstHotelPayload);
+    const secondHotel = await createHotel(merchantToken, {
+      ...secondHotelPayload,
+      nameEn: 'Unique Boutique Hotel',
+    });
+
+    await request(app.getHttpServer())
+      .post('/hotels')
+      .set('Authorization', `Bearer ${merchantToken}`)
+      .send({
+        ...secondHotelPayload,
+        nameEn: firstHotelPayload.nameEn,
+      })
+      .expect(409)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<null>;
+
+        expect(responseBody).toMatchObject({
+          code: 409,
+          data: null,
+        });
+      });
+
+    await request(app.getHttpServer())
+      .patch(`/hotels/${secondHotel.id}`)
+      .set('Authorization', `Bearer ${merchantToken}`)
+      .send({
+        ...secondHotelPayload,
+        nameEn: firstHotel.nameEn,
+      })
+      .expect(409)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<null>;
+
+        expect(responseBody).toMatchObject({
+          code: 409,
+          data: null,
+        });
+      });
+  });
+
+  it('returns 400 for null and empty hotel update payloads', async () => {
+    const merchantToken = await registerAndLogin('merchant01', Role.MERCHANT);
+    const hotel = await createHotel(merchantToken, firstHotelPayload);
+
+    await request(app.getHttpServer())
+      .patch(`/hotels/${hotel.id}`)
+      .set('Authorization', `Bearer ${merchantToken}`)
+      .set('Content-Type', 'application/json')
+      .send('null')
+      .expect(400)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<null>;
+
+        expect(responseBody).toMatchObject({
+          code: 400,
+          data: null,
+        });
+      });
+
+    await request(app.getHttpServer())
+      .patch(`/hotels/${hotel.id}`)
+      .set('Authorization', `Bearer ${merchantToken}`)
+      .send({})
+      .expect(400)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<null>;
+
+        expect(responseBody).toMatchObject({
+          code: 400,
+          data: null,
+        });
+      });
+  });
+
+  it('trims blank facilities when a MERCHANT sends facilities as an array', async () => {
+    const merchantToken = await registerAndLogin('merchant01', Role.MERCHANT);
+
+    await request(app.getHttpServer())
+      .post('/hotels')
+      .set('Authorization', `Bearer ${merchantToken}`)
+      .send({
+        ...firstHotelPayload,
+        facilities: [' wifi ', '', '  ', 'parking'],
+      })
+      .expect(201)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<HotelResponse>;
+
+        expect(responseBody.data.facilities).toEqual(['wifi', 'parking']);
       });
   });
 

@@ -1,9 +1,10 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { HotelStatus } from '@prisma/client';
+import { HotelStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { HotelDto, NormalizedHotelDto } from './dto/hotel.dto';
 
@@ -26,23 +27,32 @@ export class HotelsService {
   async create(merchantId: number, dto: HotelDto) {
     const data = normalizeHotelCreateDto(dto);
 
-    return this.prisma.hotel.create({
-      data: {
-        ...data,
-        status: HotelStatus.PENDING_REVIEW,
-        rejectReason: null,
-        merchantId,
-      },
-      include: {
-        roomTypes: {
-          orderBy: { id: 'asc' },
+    try {
+      return await this.prisma.hotel.create({
+        data: {
+          ...data,
+          status: HotelStatus.PENDING_REVIEW,
+          rejectReason: null,
+          merchantId,
         },
-      },
-    });
+        include: {
+          roomTypes: {
+            orderBy: { id: 'asc' },
+          },
+        },
+      });
+    } catch (error: unknown) {
+      if (isUniqueConstraintError(error)) {
+        throw new ConflictException('Hotel English name already exists');
+      }
+
+      throw error;
+    }
   }
 
   async update(idValue: string, merchantId: number, dto: HotelDto) {
     const id = parseId(idValue);
+    const data = normalizeHotelCreateDto(dto);
     const existing = await this.prisma.hotel.findFirst({
       where: { id, merchantId },
     });
@@ -51,21 +61,27 @@ export class HotelsService {
       throw new NotFoundException('Hotel not found');
     }
 
-    const data = normalizeHotelDto(dto, false);
-
-    return this.prisma.hotel.update({
-      where: { id },
-      data: {
-        ...data,
-        status: HotelStatus.PENDING_REVIEW,
-        rejectReason: null,
-      },
-      include: {
-        roomTypes: {
-          orderBy: { id: 'asc' },
+    try {
+      return await this.prisma.hotel.update({
+        where: { id },
+        data: {
+          ...data,
+          status: HotelStatus.PENDING_REVIEW,
+          rejectReason: null,
         },
-      },
-    });
+        include: {
+          roomTypes: {
+            orderBy: { id: 'asc' },
+          },
+        },
+      });
+    } catch (error: unknown) {
+      if (isUniqueConstraintError(error)) {
+        throw new ConflictException('Hotel English name already exists');
+      }
+
+      throw error;
+    }
   }
 }
 
@@ -79,44 +95,9 @@ function parseId(value: string): number {
   return id;
 }
 
-function normalizeHotelDto(
-  dto: HotelDto,
-  requireAllFields: boolean,
-): Partial<NormalizedHotelDto> {
-  const data: Partial<NormalizedHotelDto> = {};
-
-  if (requireAllFields || dto.nameCn !== undefined) {
-    data.nameCn = normalizeRequiredString(dto.nameCn, 'nameCn');
-  }
-
-  if (requireAllFields || dto.nameEn !== undefined) {
-    data.nameEn = normalizeRequiredString(dto.nameEn, 'nameEn');
-  }
-
-  if (requireAllFields || dto.address !== undefined) {
-    data.address = normalizeRequiredString(dto.address, 'address');
-  }
-
-  if (requireAllFields || dto.starRating !== undefined) {
-    data.starRating = normalizeStarRating(dto.starRating);
-  }
-
-  if (requireAllFields || dto.openedAt !== undefined) {
-    data.openedAt = normalizeOpenedAt(dto.openedAt);
-  }
-
-  if (requireAllFields || dto.imageUrl !== undefined) {
-    data.imageUrl = normalizeImageUrl(dto.imageUrl);
-  }
-
-  if (requireAllFields || dto.facilities !== undefined) {
-    data.facilities = normalizeFacilities(dto.facilities);
-  }
-
-  return data;
-}
-
 function normalizeHotelCreateDto(dto: HotelDto): NormalizedHotelDto {
+  assertHotelBody(dto);
+
   return {
     nameCn: normalizeRequiredString(dto.nameCn, 'nameCn'),
     nameEn: normalizeRequiredString(dto.nameEn, 'nameEn'),
@@ -126,6 +107,12 @@ function normalizeHotelCreateDto(dto: HotelDto): NormalizedHotelDto {
     imageUrl: normalizeImageUrl(dto.imageUrl),
     facilities: normalizeFacilities(dto.facilities),
   };
+}
+
+function assertHotelBody(value: unknown): asserts value is HotelDto {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new BadRequestException('Hotel payload must be an object');
+  }
 }
 
 function normalizeRequiredString(value: unknown, fieldName: string): string {
@@ -183,7 +170,7 @@ function normalizeFacilities(value: unknown): string[] {
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => normalizeFacility(item));
+    return value.map((item) => normalizeFacility(item)).filter(Boolean);
   }
 
   if (typeof value === 'string') {
@@ -202,4 +189,15 @@ function normalizeFacility(value: unknown): string {
   }
 
   return value.trim();
+}
+
+function isUniqueConstraintError(
+  error: unknown,
+): error is Prisma.PrismaClientKnownRequestError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'P2002'
+  );
 }
