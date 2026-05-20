@@ -1,0 +1,7 @@
+interface:
+  display_name: "Ele UI"
+  short_description: "易宿酒店预订平台前端 UI 风格包"
+  default_prompt: "Use $ele-ui 为易宿酒店预订平台实现一个清爽可用的前端页面。"
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ele UI</title>
+  <style>
+    :root {
+      --bg: #f7f7f4;
+      --ink: #171717;
+      --muted: #64645f;
+      --line: #deded6;
+      --paper: #ffffff;
+      --soft: #eeeee8;
+      --green: #1f8a5b;
+      --blue: #2768a7;
+      --amber: #b17418;
+      --red: #b64f42;
+      --shadow: 0 18px 50px rgba(35, 35, 30, 0.08);
+      --radius: 8px;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(90deg, rgba(31, 138, 91, 0.07) 0 1px, transparent 1px 100%),
+        linear-gradient(180deg, rgba(31, 138, 91, 0.05) 0 1px, transparent 1px 100%),
+        var(--bg);
+      background-size: 28px 28px;
+      letter-spacing: 0;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1120px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 24px 0 56px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+      gap: 18px;
+      align-items: stretch;
+      min-height: 420px;
+    }
+
+    .hero-main,
+    .hero-side,
+    .panel,
+    .week-card,
+    .project-card,
+    .check-card {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-main {
+      padding: clamp(24px, 5vw, 58px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      right: 26px;
+      bottom: 24px;
+      width: min(46%, 320px);
+      aspect-ratio: 1;
+      border: 1px solid rgba(31, 138, 91, 0.26);
+      background:
+        linear-gradient(90deg, transparent 48%, rgba(31, 138, 91, 0.18) 49% 51%, transparent 52%),
+        linear-gradient(0deg, transparent 48%, rgba(31, 138, 91, 0.18) 49% 51%, transparent 52%);
+      opacity: 0.7;
+      transform: rotate(-7deg);
+    }
+
+    .eyebrow {
+      width: fit-content;
+      padding: 6px 10px;
+      border: 1px solid rgba(31, 138, 91, 0.28);
+      color: var(--green);
+      background: rgba(31, 138, 91, 0.08);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 26px 0 0;
+      max-width: 680px;
+      font-size: clamp(40px, 8vw, 84px);
+      line-height: 0.96;
+      letter-spacing: 0;
+      text-wrap: balance;
+    }
+
+    .subtitle {
+      margin: 22px 0 0;
+      max-width: 620px;
+      color: var(--muted);
+      font-size: clamp(16px, 2.2vw, 21px);
+      line-height: 1.65;
+      text-wrap: pretty;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 30px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--ink);
+      border-radius: 6px;
+      padding: 0 14px;
+      background: var(--ink);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      background: white;
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .btn:focus-visible,
+    .tab:focus-visible,
+    .task:focus-visible {
+      outline: 3px solid rgba(39, 104, 167, 0.28);
+      outline-offset: 2px;
+    }
+
+    .hero-side {
+      padding: 22px;
+      display: grid;
+      align-content: space-between;
+      gap: 18px;
+      background:
+        linear-gradient(145deg, rgba(31, 138, 91, 0.08), transparent 45%),
+        var(--paper);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric {
+      min-height: 112px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: rgba(247, 247, 244, 0.74);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: clamp(28px, 6vw, 44px);
+      line-height: 1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .signal {
+      border-top: 1px solid var(--line);
+      padding-top: 16px;
+    }
+
+    .signal h2,
+    .section-title h2,
+    .panel h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: white;
+      color: #363631;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    section {
+      margin-top: 18px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      margin: 34px 0 12px;
+    }
+
+    .section-title p {
+      margin: 0;
+      max-width: 560px;
+      color: var(--muted);
+      line-height: 1.6;
+      text-align: right;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .tab {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: var(--muted);
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .tab.active {
+      color: white;
+      border-color: var(--ink);
+      background: var(--ink);
+    }
+
+    .week-card {
+      padding: clamp(18px, 4vw, 30px);
+      min-height: 320px;
+    }
+
+    .week-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 16px;
+    }
+
+    .week-head h3 {
+      margin: 0;
+      font-size: clamp(26px, 5vw, 44px);
+      line-height: 1.04;
+      text-wrap: balance;
+    }
+
+    .week-label {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: white;
+      background: var(--green);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .week-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .mini h4 {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    .mini ul {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.74;
+    }
+
+    .mini li::marker {
+      color: var(--green);
+    }
+
+    .projects {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .project-card {
+      padding: 18px;
+      min-height: 218px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .project-card::before {
+      content: attr(data-index);
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-weight: 900;
+      margin-bottom: 20px;
+    }
+
+    .project-card h3 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.28;
+    }
+
+    .project-card p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      line-height: 1.62;
+    }
+
+    .project-card b {
+      color: var(--ink);
+    }
+
+    .ops {
+      display: grid;
+      grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+      gap: 12px;
+    }
+
+    .panel {
+      padding: 20px;
+    }
+
+    .panel p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .day-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .day {
+      min-height: 104px;
+      padding: 12px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--soft);
+    }
+
+    .day strong {
+      display: block;
+      font-size: 19px;
+    }
+
+    .day span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.42;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .task {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: var(--ink);
+      padding: 10px 12px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .box {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--line);
+      border-radius: 4px;
+      background: white;
+    }
+
+    .task.done .box {
+      border-color: var(--green);
+      background: linear-gradient(135deg, var(--green), #56b783);
+    }
+
+    .task.done .task-text {
+      color: var(--muted);
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .tag {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .source {
+      margin-top: 30px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .source a {
+      color: var(--blue);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    @media (max-width: 840px) {
+      .shell {
+        width: min(100% - 20px, 680px);
+        padding-top: 10px;
+      }
+
+      .hero,
+      .ops {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+      }
+
+      .hero-main::after {
+        width: 210px;
+        right: -32px;
+        bottom: -34px;
+      }
+
+      .section-title {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .section-title p {
+        text-align: left;
+      }
+
+      .week-body,
+      .projects {
+        grid-template-columns: 1fr;
+      }
+
+      .day-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 460px) {
+      .metric-grid,
+      .tabs {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .hero-main,
+      .hero-side,
+      .panel,
+      .week-card {
+        padding: 18px;
+      }
+
+      h1 {
+        font-size: 42px;
+      }
+
+      .week-head {
+        flex-direction: column;
+      }
+
+      .day-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .task {
+        grid-template-columns: 22px 1fr;
+      }
+
+      .tag {
+        grid-column: 2;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="hero-main">
+        <div>
+          <div class="eyebrow">研究生组会 / 论文调研展示</div>
+          <h1>把论文调研讲成清楚的研究判断</h1>
+          <p class="subtitle">用一页 H5 汇报研究问题、方法脉络、实验结论、局限启发和下一步计划，避免把论文原文堆成阅读笔记。</p>
+        </div>
+        <div class="hero-actions">
+          <a class="btn" href="#stages">看论文脉络</a>
+          <a class="btn secondary" href="#portfolio">看研究结论</a>
+        </div>
+      </div>
+
+      <aside class="hero-side" aria-label="目标指标">
+        <div class="metric-grid">
+          <div class="metric"><strong>8</strong><span>篇核心论文：按问题、方法和实验线索归类</span></div>
+          <div class="metric"><strong>3</strong><span>类方法框架：基线、改进路线、最新趋势</span></div>
+          <div class="metric"><strong>5</strong><span>个对比维度：数据、指标、效率、泛化、局限</span></div>
+          <div class="metric"><strong>2</strong><span>个下一步计划：复现实验与改进方向</span></div>
+        </div>
+        <div class="signal">
+          <h2>汇报关键词</h2>
+          <div class="chips">
+            <span class="chip">Research Gap</span>
+            <span class="chip">Method</span>
+            <span class="chip">Dataset</span>
+            <span class="chip">Ablation</span>
+            <span class="chip">Limitation</span>
+          </div>
+        </div>
+      </aside>
+    </header>
+
+    <section id="stages">
+      <div class="section-title">
+        <h2>论文脉络</h2>
+        <p>每个 tab 对应一个汇报章节，只保留能支撑研究判断的信息。</p>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="论文调研章节">
+        <button class="tab active" type="button" data-stage="0">问题</button>
+        <button class="tab" type="button" data-stage="1">方法</button>
+        <button class="tab" type="button" data-stage="2">实验</button>
+        <button class="tab" type="button" data-stage="3">启发</button>
+      </div>
+
+      <article class="week-card" id="stage-card">
+        <div class="week-head">
+          <h3 id="stage-title">研究问题与论文范围</h3>
+          <span class="week-label" id="stage-label">Problem</span>
+        </div>
+        <div class="week-body">
+          <div class="mini">
+            <h4>核心信息</h4>
+            <ul id="learn-list"></ul>
+          </div>
+          <div class="mini">
+            <h4>怎么讲</h4>
+            <ul id="build-list"></ul>
+          </div>
+          <div class="mini">
+            <h4>组会结论</h4>
+            <ul id="proof-list"></ul>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="portfolio">
+      <div class="section-title">
+        <h2>研究结论</h2>
+        <p>卡片用于承载三类关键判断：这类工作解决了什么、为什么有效、还缺什么。</p>
+      </div>
+      <div class="projects">
+        <article class="project-card" data-index="01">
+          <h3>问题定义</h3>
+          <p><b>结论：</b>这一组论文围绕同一个核心问题展开，但假设、数据条件和评估目标并不完全一致。</p>
+          <p><b>汇报重点：</b>先讲任务边界，再讲为什么已有方法还不够。</p>
+        </article>
+        <article class="project-card" data-index="02">
+          <h3>方法演进</h3>
+          <p><b>结论：</b>方法改进通常来自结构约束、训练目标、数据增强或推理流程的变化。</p>
+          <p><b>汇报重点：</b>不要逐篇复述，按技术路线对比。</p>
+        </article>
+        <article class="project-card" data-index="03">
+          <h3>局限与启发</h3>
+          <p><b>结论：</b>真正值得带走的是局限背后的研究机会，而不是论文列表本身。</p>
+          <p><b>汇报重点：</b>把下一步实验设计说清楚。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="ops">
+      <div class="panel">
+        <h2>组会准备节奏</h2>
+        <p>用固定步骤把论文材料压缩成可讲、可问、可继续实验的内容。</p>
+        <div class="day-grid">
+          <div class="day"><strong>读</strong><span>确认论文、作者、年份、会议和核心结论</span></div>
+          <div class="day"><strong>拆</strong><span>按问题、方法、实验、局限重组材料</span></div>
+          <div class="day"><strong>比</strong><span>整理方法矩阵和关键指标差异</span></div>
+          <div class="day"><strong>讲</strong><span>把每屏压缩成一个明确判断</span></div>
+          <div class="day"><strong>问</strong><span>准备组会讨论问题和下一步实验</span></div>
+        </div>
+      </div>
+
+      <div class="panel check-card">
+        <h2>汇报检查清单</h2>
+        <p>点击即可标记完成，本地浏览器会记住进度。</p>
+        <div class="checklist" id="checklist">
+          <button class="task" type="button" data-task="1"><span class="box"></span><span class="task-text">核对论文标题、作者、年份、会议和链接</span><span class="tag">事实</span></button>
+          <button class="task" type="button" data-task="2"><span class="box"></span><span class="task-text">写清楚研究问题和现有方法缺口</span><span class="tag">主线</span></button>
+          <button class="task" type="button" data-task="3"><span class="box"></span><span class="task-text">整理方法对比、实验指标和局限</span><span class="tag">证据</span></button>
+          <button class="task" type="button" data-task="4"><span class="box"></span><span class="task-text">准备组会讨论问题和下一步实验</span><span class="tag">讨论</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>一句话定位</h2>
+      <p>这是一份面向研究生组会的论文调研展示：用少量关键论文说明一个研究问题的技术脉络、证据强弱、主要局限和可执行的下一步。</p>
+    </section>
+
+    <footer class="source">
+      内容来源：替换为真实论文链接、DOI、arXiv、会议页或明确写“用户提供材料”。不要编造外部来源。
+    </footer>
+  </main>
+
+  <script>
+    const stages = [
+      {
+        label: "Problem",
+        title: "研究问题与论文范围",
+        learn: ["研究任务是什么", "论文覆盖哪些年份和会议", "哪些数据集或应用场景最重要"],
+        build: ["给出一句话 research gap", "列出纳入和排除标准", "说明为什么这些论文放在一起讲"],
+        proof: ["听众能复述问题边界", "论文范围真实可追溯", "首屏不堆文献列表"]
+      },
+      {
+        label: "Method",
+        title: "方法脉络与技术路线",
+        learn: ["基线方法是什么", "改进来自结构、训练还是推理", "方法之间是否可比较"],
+        build: ["按路线而不是逐篇排序", "画出核心模块差异", "保留关键公式或伪代码位置"],
+        proof: ["能讲清方法为什么有效", "对比维度一致", "没有机械复述摘要"]
+      },
+      {
+        label: "Evidence",
+        title: "实验结论与证据强度",
+        learn: ["使用了哪些数据集", "主指标和消融指标是什么", "结果是否支持作者结论"],
+        build: ["整理关键指标表述", "突出最有解释力的实验", "标出不公平或不可比之处"],
+        proof: ["指标不虚构", "结论有证据支撑", "局限不是泛泛而谈"]
+      },
+      {
+        label: "Insight",
+        title: "局限启发与下一步",
+        learn: ["哪些问题仍未解决", "哪些假设值得复现", "下一步实验如何最小化验证"],
+        build: ["写三条讨论问题", "写两条后续实验", "补齐真实来源说明"],
+        proof: ["组会有讨论入口", "下一步可执行", "来源链接真实"]
+      }
+    ];
+
+    const tabs = Array.from(document.querySelectorAll(".tab"));
+    const stageTitle = document.querySelector("#stage-title");
+    const stageLabel = document.querySelector("#stage-label");
+    const learnList = document.querySelector("#learn-list");
+    const buildList = document.querySelector("#build-list");
+    const proofList = document.querySelector("#proof-list");
+
+    function renderList(target, items) {
+      target.innerHTML = items.map((item) => `<li>${item}</li>`).join("");
+    }
+
+    function setStage(index) {
+      const stage = stages[index];
+      stageTitle.textContent = stage.title;
+      stageLabel.textContent = stage.label;
+      renderList(learnList, stage.learn);
+      renderList(buildList, stage.build);
+      renderList(proofList, stage.proof);
+      tabs.forEach((tab, tabIndex) => tab.classList.toggle("active", tabIndex === index));
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => setStage(Number(tab.dataset.stage)));
+    });
+
+    const storageKey = "ele-h5-academic-template-tasks";
+    const saved = new Set(JSON.parse(localStorage.getItem(storageKey) || "[]"));
+    const tasks = Array.from(document.querySelectorAll(".task"));
+
+    function syncTasks() {
+      tasks.forEach((task) => task.classList.toggle("done", saved.has(task.dataset.task)));
+      localStorage.setItem(storageKey, JSON.stringify(Array.from(saved)));
+    }
+
+    tasks.forEach((task) => {
+      task.addEventListener("click", () => {
+        if (saved.has(task.dataset.task)) saved.delete(task.dataset.task);
+        else saved.add(task.dataset.task);
+        syncTasks();
+      });
+    });
+
+    setStage(0);
+    syncTasks();
+  </script>
+</body>
+</html>
