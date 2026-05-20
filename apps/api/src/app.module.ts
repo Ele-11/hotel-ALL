@@ -4,9 +4,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { HttpExceptionFilter } from './common/http-exception.filter';
+import { HotelsModule } from './hotels/hotels.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, HotelsModule],
   controllers: [AppController],
   providers: [
     AppService,
