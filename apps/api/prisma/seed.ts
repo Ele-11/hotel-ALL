@@ -1,17 +1,29 @@
 import { HotelStatus, PrismaClient, Role } from '@prisma/client';
+import { PasswordService } from '../src/auth/password.service';
 
 const prisma = new PrismaClient();
+const passwordService = new PasswordService();
 
 async function main() {
+  const adminPassword = await passwordService.hashPassword(
+    process.env.SEED_ADMIN_PASSWORD ?? 'admin123456',
+  );
+  const merchantPassword = await passwordService.hashPassword(
+    process.env.SEED_MERCHANT_PASSWORD ?? 'merchant123456',
+  );
+  const userPassword = await passwordService.hashPassword(
+    process.env.SEED_USER_PASSWORD ?? 'user123456',
+  );
+
   const admin = await prisma.user.upsert({
     where: { username: 'admin' },
     update: {
-      password: 'admin123456',
+      password: adminPassword,
       role: Role.ADMIN,
     },
     create: {
       username: 'admin',
-      password: 'admin123456',
+      password: adminPassword,
       role: Role.ADMIN,
     },
   });
@@ -19,12 +31,12 @@ async function main() {
   const merchant = await prisma.user.upsert({
     where: { username: 'merchant01' },
     update: {
-      password: 'merchant123456',
+      password: merchantPassword,
       role: Role.MERCHANT,
     },
     create: {
       username: 'merchant01',
-      password: 'merchant123456',
+      password: merchantPassword,
       role: Role.MERCHANT,
     },
   });
@@ -32,12 +44,12 @@ async function main() {
   const user = await prisma.user.upsert({
     where: { username: 'user01' },
     update: {
-      password: 'user123456',
+      password: userPassword,
       role: Role.USER,
     },
     create: {
       username: 'user01',
-      password: 'user123456',
+      password: userPassword,
       role: Role.USER,
     },
   });
