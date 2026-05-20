@@ -344,6 +344,18 @@ function createPrismaMock() {
     },
     roomType: {
       create: jest.fn(({ data }: { data: RoomTypeCreateData }) => {
+        const existing = roomTypes.find(
+          (roomType) =>
+            roomType.hotelId === data.hotelId && roomType.name === data.name,
+        );
+        if (existing) {
+          const error = new Error('Unique constraint failed') as Error & {
+            code?: string;
+          };
+          error.code = 'P2002';
+          throw error;
+        }
+
         const now = new Date();
         const roomType = {
           id: nextRoomTypeId,
@@ -423,6 +435,22 @@ function createPrismaMock() {
           const roomType = roomTypes.find((item) => item.id === where.id);
           if (!roomType) {
             throw new Error('Room type not found');
+          }
+
+          if (data.name !== undefined) {
+            const existing = roomTypes.find(
+              (item) =>
+                item.id !== where.id &&
+                item.hotelId === roomType.hotelId &&
+                item.name === data.name,
+            );
+            if (existing) {
+              const error = new Error('Unique constraint failed') as Error & {
+                code?: string;
+              };
+              error.code = 'P2002';
+              throw error;
+            }
           }
 
           Object.assign(roomType, {
@@ -726,6 +754,11 @@ describe('Merchant hotel management (e2e)', () => {
   it('allows a MERCHANT to create and edit room types under their own hotel', async () => {
     const merchantToken = await registerAndLogin('merchant01', Role.MERCHANT);
     const hotel = await createHotel(merchantToken, firstHotelPayload);
+    prismaMock.__testing.setHotelReviewState(
+      hotel.id,
+      HotelStatus.REJECTED,
+      'Room information missing',
+    );
 
     const createResponse = await request(app.getHttpServer())
       .post('/rooms')
@@ -748,6 +781,18 @@ describe('Merchant hotel management (e2e)', () => {
         price: '888.00',
       },
     });
+    await expectHotelReviewState(
+      merchantToken,
+      hotel.id,
+      HotelStatus.PENDING_REVIEW,
+      null,
+    );
+
+    prismaMock.__testing.setHotelReviewState(
+      hotel.id,
+      HotelStatus.REJECTED,
+      'Room price out of date',
+    );
 
     await request(app.getHttpServer())
       .patch(`/rooms/${createBody.data.id}`)
@@ -771,6 +816,12 @@ describe('Merchant hotel management (e2e)', () => {
           },
         });
       });
+    await expectHotelReviewState(
+      merchantToken,
+      hotel.id,
+      HotelStatus.PENDING_REVIEW,
+      null,
+    );
   });
 
   it('returns 404 when another MERCHANT creates or edits room types for hotels and rooms they do not own', async () => {
@@ -862,6 +913,56 @@ describe('Merchant hotel management (e2e)', () => {
       });
   });
 
+  it('returns 409 when a MERCHANT creates or edits a duplicate room type name under the same hotel', async () => {
+    const merchantToken = await registerAndLogin('merchant01', Role.MERCHANT);
+    const hotel = await createHotel(merchantToken, firstHotelPayload);
+    const firstRoom = await createRoomType(merchantToken, {
+      hotelId: hotel.id,
+      name: 'Deluxe King',
+      price: 888,
+    });
+    const secondRoom = await createRoomType(merchantToken, {
+      hotelId: hotel.id,
+      name: 'Twin Room',
+      price: 688,
+    });
+
+    await request(app.getHttpServer())
+      .post('/rooms')
+      .set('Authorization', `Bearer ${merchantToken}`)
+      .send({
+        hotelId: hotel.id,
+        name: firstRoom.name,
+        price: 988,
+      })
+      .expect(409)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<null>;
+
+        expect(responseBody).toMatchObject({
+          code: 409,
+          data: null,
+        });
+      });
+
+    await request(app.getHttpServer())
+      .patch(`/rooms/${secondRoom.id}`)
+      .set('Authorization', `Bearer ${merchantToken}`)
+      .send({
+        name: firstRoom.name,
+        price: 788,
+      })
+      .expect(409)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<null>;
+
+        expect(responseBody).toMatchObject({
+          code: 409,
+          data: null,
+        });
+      });
+  });
+
   async function registerAndLogin(username: string, role: Role) {
     await request(app.getHttpServer()).post('/auth/register').send({
       username,
@@ -905,6 +1006,29 @@ describe('Merchant hotel management (e2e)', () => {
       .expect(201);
 
     return (response.body as ApiEnvelope<RoomTypeResponse>).data;
+  }
+
+  async function expectHotelReviewState(
+    token: string,
+    hotelId: number,
+    status: HotelStatus,
+    rejectReason: string | null,
+  ) {
+    await request(app.getHttpServer())
+      .get('/hotels/my')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<HotelResponse[]>;
+        const matchingHotel = responseBody.data.find(
+          (item) => item.id === hotelId,
+        );
+
+        expect(matchingHotel).toMatchObject({
+          status,
+          rejectReason,
+        });
+      });
   }
 });
 
