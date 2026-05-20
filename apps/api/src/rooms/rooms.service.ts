@@ -12,6 +12,8 @@ import {
   RoomDto,
 } from './dto/room.dto';
 
+const MAX_DATABASE_INT = 2147483647;
+
 @Injectable()
 export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -125,7 +127,11 @@ function parseId(value: string, fieldName: string): number {
 
 function normalizePositiveInteger(value: unknown, fieldName: string): number {
   if (typeof value === 'number') {
-    if (!Number.isInteger(value) || value <= 0) {
+    if (
+      !Number.isSafeInteger(value) ||
+      value <= 0 ||
+      value > MAX_DATABASE_INT
+    ) {
       throw new BadRequestException(`${fieldName} must be a positive integer`);
     }
 
@@ -137,7 +143,7 @@ function normalizePositiveInteger(value: unknown, fieldName: string): number {
   }
 
   const normalized = Number(value);
-  if (!Number.isSafeInteger(normalized)) {
+  if (!Number.isSafeInteger(normalized) || normalized > MAX_DATABASE_INT) {
     throw new BadRequestException(`${fieldName} must be a positive integer`);
   }
 

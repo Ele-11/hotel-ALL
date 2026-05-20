@@ -949,6 +949,45 @@ describe('Merchant hotel management (e2e)', () => {
     }
   });
 
+  it('returns 400 for room ids outside the database integer range', async () => {
+    const merchantToken = await registerAndLogin('merchant01', Role.MERCHANT);
+
+    await request(app.getHttpServer())
+      .post('/rooms')
+      .set('Authorization', `Bearer ${merchantToken}`)
+      .send({
+        hotelId: 2147483648,
+        name: 'Out Of Range Hotel',
+        price: 888,
+      })
+      .expect(400)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<null>;
+
+        expect(responseBody).toMatchObject({
+          code: 400,
+          data: null,
+        });
+      });
+
+    await request(app.getHttpServer())
+      .patch('/rooms/2147483648')
+      .set('Authorization', `Bearer ${merchantToken}`)
+      .send({
+        name: 'Out Of Range Room',
+        price: 888,
+      })
+      .expect(400)
+      .expect(({ body }) => {
+        const responseBody = body as ApiEnvelope<null>;
+
+        expect(responseBody).toMatchObject({
+          code: 400,
+          data: null,
+        });
+      });
+  });
+
   it('returns 409 when a MERCHANT creates or edits a duplicate room type name under the same hotel', async () => {
     const merchantToken = await registerAndLogin('merchant01', Role.MERCHANT);
     const hotel = await createHotel(merchantToken, firstHotelPayload);
