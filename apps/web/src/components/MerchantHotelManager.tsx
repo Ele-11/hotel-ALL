@@ -532,8 +532,8 @@ export function MerchantHotelManager() {
                   </label>
                   <TextField
                     label="开业时间"
+                    placeholder="YYYY-MM-DD"
                     required
-                    type="date"
                     value={hotelForm.openedAt}
                     onChange={(value) =>
                       setHotelForm((form) => ({ ...form, openedAt: value }))
