@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AdminHotelAuditManager } from './components/AdminHotelAuditManager'
 import { AuthForm } from './components/AuthForm'
 import { MerchantHotelManager } from './components/MerchantHotelManager'
 import { useAuthStore } from './store/auth-store'
@@ -81,6 +82,8 @@ function App() {
           </div>
         ) : currentUser.role === 'MERCHANT' ? (
           <MerchantHotelManager />
+        ) : currentUser.role === 'ADMIN' ? (
+          <AdminHotelAuditManager />
         ) : (
           <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-base font-semibold text-slate-950">功能入口</h2>

@@ -11,6 +11,7 @@ import type {
   MerchantRoom,
   MerchantRoomInput,
 } from '../types/merchant'
+import type { AdminHotel, AuditHotelListParams } from '../types/admin'
 
 export const TOKEN_STORAGE_KEY = 'hotel_auth_token'
 
@@ -96,6 +97,45 @@ export async function updateMerchantRoom(
   const response = await apiClient.patch<ApiResponse<MerchantRoom>>(
     `/rooms/${roomId}`,
     input,
+  )
+  return response.data.data
+}
+
+export async function getAuditHotels(params: AuditHotelListParams = {}) {
+  const response = await apiClient.get<ApiResponse<AdminHotel[]>>('/audit/hotels', {
+    params:
+      params.status && params.status !== 'ALL'
+        ? { status: params.status }
+        : undefined,
+  })
+  return response.data.data
+}
+
+export async function approveAuditHotel(hotelId: number) {
+  const response = await apiClient.patch<ApiResponse<AdminHotel>>(
+    `/audit/hotels/${hotelId}/approve`,
+  )
+  return response.data.data
+}
+
+export async function rejectAuditHotel(hotelId: number, reason: string) {
+  const response = await apiClient.patch<ApiResponse<AdminHotel>>(
+    `/audit/hotels/${hotelId}/reject`,
+    { reason },
+  )
+  return response.data.data
+}
+
+export async function publishAuditHotel(hotelId: number) {
+  const response = await apiClient.patch<ApiResponse<AdminHotel>>(
+    `/audit/hotels/${hotelId}/publish`,
+  )
+  return response.data.data
+}
+
+export async function offlineAuditHotel(hotelId: number) {
+  const response = await apiClient.patch<ApiResponse<AdminHotel>>(
+    `/audit/hotels/${hotelId}/offline`,
   )
   return response.data.data
 }
