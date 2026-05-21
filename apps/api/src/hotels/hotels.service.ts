@@ -7,6 +7,10 @@ import {
 import { HotelStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { HotelDto, NormalizedHotelDto } from './dto/hotel.dto';
+import {
+  NormalizedPublicHotelQuery,
+  PublicHotelQueryDto,
+} from './dto/public-hotel-query.dto';
 
 @Injectable()
 export class HotelsService {
@@ -22,6 +26,106 @@ export class HotelsService {
       },
       orderBy: { id: 'asc' },
     });
+  }
+
+  async listPublic(query: PublicHotelQueryDto) {
+    const normalizedQuery = normalizePublicHotelQuery(query);
+    const publishedHotels = await this.prisma.hotel.findMany({
+      where: {
+        status: HotelStatus.PUBLISHED,
+      },
+      include: {
+        roomTypes: true,
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    const filteredHotels = publishedHotels
+      .filter((hotel) => matchPublicHotel(hotel, normalizedQuery))
+      .map((hotel) => ({
+        id: hotel.id,
+        nameCn: hotel.nameCn,
+        address: hotel.address,
+        starRating: hotel.starRating,
+        imageUrl: hotel.imageUrl,
+        minPrice: getMinPrice(hotel.roomTypes),
+      }));
+
+    const total = filteredHotels.length;
+    const totalPages =
+      total === 0 ? 0 : Math.ceil(total / normalizedQuery.pageSize);
+    const start = (normalizedQuery.page - 1) * normalizedQuery.pageSize;
+
+    return {
+      items: filteredHotels.slice(start, start + normalizedQuery.pageSize),
+      page: normalizedQuery.page,
+      pageSize: normalizedQuery.pageSize,
+      total,
+      totalPages,
+    };
+  }
+
+  async getPublicById(idValue: string, query: PublicHotelQueryDto) {
+    const id = parseId(idValue);
+    const normalizedQuery = normalizePublicHotelQuery(query);
+    const hotel = await this.prisma.hotel.findFirst({
+      where: {
+        id,
+        status: HotelStatus.PUBLISHED,
+      },
+      include: {
+        roomTypes: true,
+      },
+    });
+
+    if (!hotel) {
+      throw new NotFoundException('Hotel not found');
+    }
+
+    return {
+      id: hotel.id,
+      nameCn: hotel.nameCn,
+      nameEn: hotel.nameEn,
+      address: hotel.address,
+      starRating: hotel.starRating,
+      openedAt: hotel.openedAt,
+      imageUrl: hotel.imageUrl,
+      facilities: hotel.facilities,
+      checkInDate: normalizedQuery.checkInDate,
+      checkOutDate: normalizedQuery.checkOutDate,
+      nights: getNights(
+        normalizedQuery.checkInDate,
+        normalizedQuery.checkOutDate,
+      ),
+      roomTypes: [...hotel.roomTypes]
+        .sort((left, right) => Number(left.price) - Number(right.price))
+        .map(formatPublicRoomType),
+    };
+  }
+
+  async listPublicRooms(idValue: string) {
+    const hotelId = parseId(idValue);
+    const hotel = await this.prisma.hotel.findFirst({
+      where: {
+        id: hotelId,
+        status: HotelStatus.PUBLISHED,
+      },
+    });
+
+    if (!hotel) {
+      throw new NotFoundException('Hotel not found');
+    }
+
+    const roomTypes = await this.prisma.roomType.findMany({
+      where: {
+        hotelId,
+      },
+      orderBy: {
+        price: 'asc',
+      },
+    });
+
+    return roomTypes.map(formatPublicRoomType);
   }
 
   async create(merchantId: number, dto: HotelDto) {
@@ -109,6 +213,19 @@ function normalizeHotelCreateDto(dto: HotelDto): NormalizedHotelDto {
   };
 }
 
+function normalizePublicHotelQuery(
+  dto: PublicHotelQueryDto,
+): NormalizedPublicHotelQuery {
+  return {
+    city: normalizeOptionalString(dto.city),
+    keyword: normalizeOptionalString(dto.keyword),
+    checkInDate: normalizeOptionalDateString(dto.checkInDate, 'checkInDate'),
+    checkOutDate: normalizeOptionalDateString(dto.checkOutDate, 'checkOutDate'),
+    page: normalizePositiveInteger(dto.page, 'page', 1),
+    pageSize: normalizePositiveInteger(dto.pageSize, 'pageSize', 10),
+  };
+}
+
 function assertHotelBody(value: unknown): asserts value is HotelDto {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new BadRequestException('Hotel payload must be an object');
@@ -126,6 +243,19 @@ function normalizeRequiredString(value: unknown, fieldName: string): string {
   }
 
   return normalized;
+}
+
+function normalizeOptionalString(value: unknown): string | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (typeof value !== 'string') {
+    throw new BadRequestException('Query value must be a string');
+  }
+
+  const normalized = value.trim();
+  return normalized ? normalized : null;
 }
 
 function normalizeStarRating(value: unknown): number {
@@ -149,6 +279,45 @@ function normalizeOpenedAt(value: unknown): Date {
   }
 
   return openedAt;
+}
+
+function normalizeOptionalDateString(
+  value: unknown,
+  fieldName: string,
+): string | null {
+  const normalized = normalizeOptionalString(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    throw new BadRequestException(`${fieldName} must be in YYYY-MM-DD format`);
+  }
+
+  const date = new Date(`${normalized}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) {
+    throw new BadRequestException(`${fieldName} must be a valid date`);
+  }
+
+  return normalized;
+}
+
+function normalizePositiveInteger(
+  value: unknown,
+  fieldName: string,
+  fallback: number,
+): number {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+
+  const normalized = typeof value === 'number' ? value : Number(value);
+  if (!Number.isInteger(normalized) || normalized <= 0) {
+    throw new BadRequestException(`${fieldName} must be a positive integer`);
+  }
+
+  return normalized;
 }
 
 function normalizeImageUrl(value: unknown): string | null {
@@ -189,6 +358,75 @@ function normalizeFacility(value: unknown): string {
   }
 
   return value.trim();
+}
+
+function matchPublicHotel(
+  hotel: {
+    nameCn: string;
+    nameEn: string;
+    address: string;
+  },
+  query: NormalizedPublicHotelQuery,
+): boolean {
+  if (
+    query.city &&
+    !hotel.address.toLowerCase().includes(query.city.toLowerCase())
+  ) {
+    return false;
+  }
+
+  if (!query.keyword) {
+    return true;
+  }
+
+  const keyword = query.keyword.toLowerCase();
+  return (
+    hotel.nameCn.toLowerCase().includes(keyword) ||
+    hotel.nameEn.toLowerCase().includes(keyword) ||
+    hotel.address.toLowerCase().includes(keyword)
+  );
+}
+
+function getMinPrice(roomTypes: Array<{ price: unknown }>): string | null {
+  if (roomTypes.length === 0) {
+    return null;
+  }
+
+  return Number(
+    [...roomTypes].sort(
+      (left, right) => Number(left.price) - Number(right.price),
+    )[0].price,
+  ).toFixed(2);
+}
+
+function getNights(
+  checkInDate: string | null,
+  checkOutDate: string | null,
+): number {
+  if (!checkInDate || !checkOutDate) {
+    return 0;
+  }
+
+  const start = new Date(`${checkInDate}T00:00:00.000Z`);
+  const end = new Date(`${checkOutDate}T00:00:00.000Z`);
+  const diffDays = Math.floor(
+    (end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000),
+  );
+
+  if (diffDays <= 0) {
+    throw new BadRequestException(
+      'checkOutDate must be later than checkInDate',
+    );
+  }
+
+  return diffDays;
+}
+
+function formatPublicRoomType<T extends { price: unknown }>(roomType: T) {
+  return {
+    ...roomType,
+    price: Number(roomType.price).toFixed(2),
+  };
 }
 
 function isUniqueConstraintError(
