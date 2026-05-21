@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { AuthForm } from './components/AuthForm'
+import { MerchantHotelManager } from './components/MerchantHotelManager'
 import { useAuthStore } from './store/auth-store'
+import type { Role } from './types/auth'
 
-const roleLabel = {
+const roleLabel: Record<Role, string> = {
   USER: '普通用户',
   MERCHANT: '商户',
   ADMIN: '管理员',
 }
 
-const roleDestinations = {
+const roleDestinations: Record<Role, string[]> = {
   USER: ['查询酒店', '查看酒店详情', '创建基础预订'],
   MERCHANT: ['查看我的酒店', '维护酒店与房型', '查看审核状态'],
   ADMIN: ['查看待审核酒店', '审核与驳回', '发布与下线'],
@@ -25,9 +27,9 @@ function App() {
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900 sm:px-6">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start">
-        <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-4 border-b border-slate-100 pb-5">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-emerald-700">
                 易宿酒店预订平台
@@ -48,79 +50,69 @@ function App() {
           </div>
 
           {isRestoring ? (
-            <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
               正在恢复登录状态
             </div>
           ) : null}
 
           {currentUser ? (
-            <div className="mt-6 space-y-5">
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                <p className="text-sm text-emerald-700">当前身份</p>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="text-lg font-semibold text-emerald-950">
-                    {currentUser.username}
-                  </span>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                    {roleLabel[currentUser.role]}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                {roleDestinations[currentUser.role].map((item) => (
-                  <div
-                    className="rounded-lg border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm"
-                    key={item}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
+            <div className="mt-5 flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <span className="text-sm text-emerald-700">当前身份</span>
+              <span className="font-semibold text-emerald-950">
+                {currentUser.username}
+              </span>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                {roleLabel[currentUser.role]}
+              </span>
             </div>
-          ) : (
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-900">
-                  普通用户
-                </p>
-                <p className="mt-2 text-sm text-slate-600">酒店查询与预订</p>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-900">商户</p>
-                <p className="mt-2 text-sm text-slate-600">酒店与房型管理</p>
-              </div>
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-900">管理员</p>
-                <p className="mt-2 text-sm text-slate-600">审核与发布管理</p>
-              </div>
-            </div>
-          )}
+          ) : null}
         </section>
 
         {!currentUser ? (
-          <AuthForm mode={mode} onModeChange={setMode} />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+            <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <RoleCard title="普通用户" description="酒店查询与预订" />
+                <RoleCard title="商户" description="酒店与房型管理" />
+                <RoleCard title="管理员" description="审核与发布管理" />
+              </div>
+            </section>
+            <AuthForm mode={mode} onModeChange={setMode} />
+          </div>
+        ) : currentUser.role === 'MERCHANT' ? (
+          <MerchantHotelManager />
         ) : (
           <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-base font-semibold text-slate-950">
-              登录状态
-            </h2>
-            <dl className="mt-4 space-y-3 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">用户 ID</dt>
-                <dd className="font-medium text-slate-900">{currentUser.id}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">角色</dt>
-                <dd className="font-medium text-slate-900">
-                  {currentUser.role}
-                </dd>
-              </div>
-            </dl>
+            <h2 className="text-base font-semibold text-slate-950">功能入口</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {roleDestinations[currentUser.role].map((item) => (
+                <div
+                  className="rounded-lg border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm"
+                  key={item}
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
           </section>
         )}
       </div>
     </main>
+  )
+}
+
+function RoleCard({
+  description,
+  title,
+}: {
+  description: string
+  title: string
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <p className="text-sm font-semibold text-slate-900">{title}</p>
+      <p className="mt-2 text-sm text-slate-600">{description}</p>
+    </div>
   )
 }
 
