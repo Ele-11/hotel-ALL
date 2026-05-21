@@ -1,17 +1,23 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { MobileBookingPanel } from "./MobileBookingPanel";
 import { getApiErrorMessage, getPublicHotelDetail } from "../lib/api";
+import type { CurrentUser } from "../types/auth";
 import type { HotelSearchParams, PublicHotelDetail } from "../types/hotel";
 
 type MobileHotelDetailProps = {
+  currentUser: CurrentUser | null;
   hotelId: number;
   onBack: () => void;
+  onRequireAuth: () => void;
   searchParams: HotelSearchParams;
 };
 
 export function MobileHotelDetail({
+  currentUser,
   hotelId,
   onBack,
+  onRequireAuth,
   searchParams,
 }: MobileHotelDetailProps) {
   const [hotel, setHotel] = useState<PublicHotelDetail | null>(null);
@@ -123,7 +129,7 @@ export function MobileHotelDetail({
                           {roomType.name}
                         </h3>
                         <p className="mt-1 text-sm text-slate-500">
-                          预订将在 Milestone 7 开放，当前仅展示公开价格。
+                          公开价格与预订入口已开放，可在下方创建基础预订记录。
                         </p>
                       </div>
                       <div className="flex items-center justify-between gap-3">
@@ -136,11 +142,18 @@ export function MobileHotelDetail({
                           </p>
                         </div>
                         <button
-                          className="rounded-2xl border border-[#ddd1bd] bg-[#faf5ec] px-4 py-2 text-sm font-semibold text-slate-500"
-                          disabled
+                          className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700"
                           type="button"
+                          onClick={() => {
+                            document
+                              .getElementById("mobile-booking-panel")
+                              ?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "start",
+                              });
+                          }}
                         >
-                          Milestone 7 开放预订
+                          去创建预订
                         </button>
                       </div>
                     </div>
@@ -150,14 +163,23 @@ export function MobileHotelDetail({
             )}
           </InfoCard>
 
-          <InfoCard title="基础信息">
-            <SummaryRow label="酒店英文名" value={hotel.nameEn} />
-            <SummaryRow label="开业时间" value={hotel.openedAt.slice(0, 10)} />
-            <SummaryRow label="星级" value={`${hotel.starRating} 星`} />
-          </InfoCard>
+            <InfoCard title="基础信息">
+              <SummaryRow label="酒店英文名" value={hotel.nameEn} />
+              <SummaryRow label="开业时间" value={hotel.openedAt.slice(0, 10)} />
+              <SummaryRow label="星级" value={`${hotel.starRating} 星`} />
+            </InfoCard>
 
-          <InfoCard title="设施">
-            {hotel.facilities.length === 0 ? (
+            <div id="mobile-booking-panel">
+              <MobileBookingPanel
+                key={`${hotel.id}:${hotel.checkInDate ?? "na"}:${hotel.checkOutDate ?? "na"}`}
+                currentUser={currentUser}
+                hotel={hotel}
+                onRequireAuth={onRequireAuth}
+              />
+            </div>
+
+            <InfoCard title="设施">
+              {hotel.facilities.length === 0 ? (
               <p className="text-sm text-slate-500">暂无设施信息</p>
             ) : (
               <div className="flex flex-wrap gap-2">
