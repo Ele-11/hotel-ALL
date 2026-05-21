@@ -1,5 +1,5 @@
 {
-  "name": "@hotel/web",
+  "name": "@hotel/mobile",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,14 +8,13 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
-    "test": "node ../api/node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand",
+    "test": "echo \"No tests configured for mobile\"",
     "preview": "vite preview"
   },
   "dependencies": {
     "axios": "^1.16.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "zustand": "^5.0.13"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
