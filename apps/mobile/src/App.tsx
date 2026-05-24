@@ -1,5 +1,10 @@
+import { BrowserRouter } from "react-router-dom";
 import { MobileAppView } from "./views/MobileAppView";
 
 export default function App() {
-  return <MobileAppView />;
+  return (
+    <BrowserRouter>
+      <MobileAppView />
+    </BrowserRouter>
+  );
 }

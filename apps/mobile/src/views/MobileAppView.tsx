@@ -1,14 +1,20 @@
-import { useState } from "react";
+import {
+  Navigate,
+  Route,
+  Routes,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { MobileUserAuth } from "../components/auth/MobileUserAuth";
 import { useMobileAuthStore } from "../stores/auth-store";
+import type { CurrentUser } from "../types/auth";
 import type { HotelSearchParams } from "../types/hotel";
 import { MobileHotelDetail } from "./hotels/MobileHotelDetail";
 import { MobileHotelList } from "./hotels/MobileHotelList";
 import { MobileHotelSearch } from "./hotels/MobileHotelSearch";
 
-type MobileView = "search" | "list" | "detail";
-
-const emptySearchParams: HotelSearchParams = {
+const EMPTY_SEARCH_PARAMS: HotelSearchParams = {
   city: "",
   keyword: "",
   checkInDate: "",
@@ -16,10 +22,6 @@ const emptySearchParams: HotelSearchParams = {
 };
 
 export function MobileAppView() {
-  const [searchParams, setSearchParams] =
-    useState<HotelSearchParams>(emptySearchParams);
-  const [selectedHotelId, setSelectedHotelId] = useState<number | null>(null);
-  const [view, setView] = useState<MobileView>("search");
   const {
     authError,
     authMode,
@@ -33,23 +35,6 @@ export function MobileAppView() {
     setAuthMode,
     setIsAuthOpen,
   } = useMobileAuthStore();
-  const listKey = JSON.stringify(searchParams);
-
-  function handleSearch(nextSearchParams: HotelSearchParams) {
-    setSearchParams(nextSearchParams);
-    setSelectedHotelId(null);
-    setView("list");
-  }
-
-  function handleSelectHotel(hotelId: number) {
-    setSelectedHotelId(hotelId);
-    setView("detail");
-  }
-
-  const detailKey =
-    selectedHotelId === null
-      ? "detail-empty"
-      : `${selectedHotelId}:${searchParams.checkInDate}:${searchParams.checkOutDate}`;
 
   return (
     <main className="min-h-screen px-4 py-5 text-slate-900">
@@ -89,36 +74,124 @@ export function MobileAppView() {
           />
         ) : null}
 
-        {view === "search" ? (
-          <MobileHotelSearch
-            initialValue={searchParams}
-            onSearch={handleSearch}
+        <Routes>
+          <Route index element={<SearchRoute />} />
+          <Route path="hotels" element={<ListRoute />} />
+          <Route
+            path="hotels/:hotelId"
+            element={
+              <DetailRoute
+                currentUser={currentUser}
+                onRequireAuth={() => {
+                  setAuthMode("login");
+                  setIsAuthOpen(true);
+                }}
+              />
+            }
           />
-        ) : null}
-
-        {view === "list" ? (
-          <MobileHotelList
-            key={listKey}
-            searchParams={searchParams}
-            onBack={() => setView("search")}
-            onSelectHotel={handleSelectHotel}
-          />
-        ) : null}
-
-        {view === "detail" && selectedHotelId !== null ? (
-          <MobileHotelDetail
-            key={detailKey}
-            currentUser={currentUser}
-            hotelId={selectedHotelId}
-            searchParams={searchParams}
-            onBack={() => setView("list")}
-            onRequireAuth={() => {
-              setAuthMode("login");
-              setIsAuthOpen(true);
-            }}
-          />
-        ) : null}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
     </main>
   );
+}
+
+function SearchRoute() {
+  const navigate = useNavigate();
+  const [urlSearchParams] = useSearchParams();
+  const searchParams = parseHotelSearchParams(urlSearchParams);
+  const searchKey = urlSearchParams.toString();
+
+  return (
+    <MobileHotelSearch
+      key={searchKey}
+      initialValue={searchParams}
+      onSearch={(nextSearchParams) => {
+        navigate(`/hotels${buildHotelSearchQuery(nextSearchParams)}`);
+      }}
+    />
+  );
+}
+
+function ListRoute() {
+  const navigate = useNavigate();
+  const [urlSearchParams] = useSearchParams();
+  const searchParams = parseHotelSearchParams(urlSearchParams);
+  const listKey = urlSearchParams.toString();
+
+  return (
+    <MobileHotelList
+      key={listKey}
+      searchParams={searchParams}
+      onBack={() => {
+        navigate(`/${buildHotelSearchQuery(searchParams)}`);
+      }}
+      onSelectHotel={(hotelId) => {
+        navigate(`/hotels/${hotelId}${buildHotelSearchQuery(searchParams)}`);
+      }}
+    />
+  );
+}
+
+function DetailRoute({
+  currentUser,
+  onRequireAuth,
+}: {
+  currentUser: CurrentUser | null;
+  onRequireAuth: () => void;
+}) {
+  const navigate = useNavigate();
+  const { hotelId } = useParams();
+  const [urlSearchParams] = useSearchParams();
+  const searchParams = parseHotelSearchParams(urlSearchParams);
+  const parsedHotelId = Number(hotelId);
+
+  if (!Number.isInteger(parsedHotelId) || parsedHotelId <= 0) {
+    return (
+      <Navigate to={`/hotels${buildHotelSearchQuery(searchParams)}`} replace />
+    );
+  }
+
+  return (
+    <MobileHotelDetail
+      key={`${parsedHotelId}:${urlSearchParams.toString()}`}
+      currentUser={currentUser}
+      hotelId={parsedHotelId}
+      searchParams={searchParams}
+      onBack={() => {
+        navigate(`/hotels${buildHotelSearchQuery(searchParams)}`);
+      }}
+      onRequireAuth={onRequireAuth}
+    />
+  );
+}
+
+function parseHotelSearchParams(
+  searchParams: URLSearchParams,
+): HotelSearchParams {
+  return {
+    ...EMPTY_SEARCH_PARAMS,
+    city: searchParams.get("city") ?? EMPTY_SEARCH_PARAMS.city,
+    keyword: searchParams.get("keyword") ?? EMPTY_SEARCH_PARAMS.keyword,
+    checkInDate:
+      searchParams.get("checkInDate") ?? EMPTY_SEARCH_PARAMS.checkInDate,
+    checkOutDate:
+      searchParams.get("checkOutDate") ?? EMPTY_SEARCH_PARAMS.checkOutDate,
+  };
+}
+
+function buildHotelSearchQuery(searchParams: HotelSearchParams) {
+  const query = new URLSearchParams();
+
+  Object.entries(searchParams).forEach(([key, value]) => {
+    const trimmedValue = value.trim();
+
+    if (trimmedValue) {
+      query.set(key, trimmedValue);
+    }
+  });
+
+  const queryString = query.toString();
+
+  return queryString ? `?${queryString}` : "";
 }
