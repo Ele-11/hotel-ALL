@@ -96,40 +96,34 @@ export function AuthForm({
           />
         </label>
 
-        {mode === "register" ? (
-          registerableRoles.length > 1 ? (
-            <fieldset>
-              <legend className="text-sm font-medium text-slate-700">
-                注册角色
-              </legend>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                {roleOptions.map((option) => (
-                  <label
-                    className={`flex cursor-pointer items-center justify-center rounded-2xl border px-3 py-2 text-sm font-medium transition ${
-                      activeRole === option.value
-                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                        : "border-[#e6dccb] text-slate-600 hover:border-[#d3c5af]"
-                    }`}
-                    key={option.value}
-                  >
-                    <input
-                      checked={activeRole === option.value}
-                      className="sr-only"
-                      name="role"
-                      type="radio"
-                      value={option.value}
-                      onChange={() => setRole(option.value)}
-                    />
-                    {option.label}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          ) : (
-            <div className="rounded-2xl border border-[#efe5d6] bg-[#faf5ec] px-4 py-3 text-sm text-slate-600">
-              注册后将创建{roleLabels[registerableRoles[0]]}账号。
+        {mode === "register" && registerableRoles.length > 1 ? (
+          <fieldset>
+            <legend className="text-sm font-medium text-slate-700">
+              注册角色
+            </legend>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {roleOptions.map((option) => (
+                <label
+                  className={`flex cursor-pointer items-center justify-center rounded-2xl border px-3 py-2 text-sm font-medium transition ${
+                    activeRole === option.value
+                      ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                      : "border-[#e6dccb] text-slate-600 hover:border-[#d3c5af]"
+                  }`}
+                  key={option.value}
+                >
+                  <input
+                    checked={activeRole === option.value}
+                    className="sr-only"
+                    name="role"
+                    type="radio"
+                    value={option.value}
+                    onChange={() => setRole(option.value)}
+                  />
+                  {option.label}
+                </label>
+              ))}
             </div>
-          )
+          </fieldset>
         ) : null}
 
         {error ? (

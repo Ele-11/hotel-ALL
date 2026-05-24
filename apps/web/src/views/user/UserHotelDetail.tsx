@@ -53,7 +53,7 @@ export function UserHotelDetail({
     <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-4 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-emerald-700">用户端酒店详情</p>
+          <p className="text-sm font-medium text-emerald-700">酒店详情</p>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
             酒店信息与房型
           </h2>
@@ -92,13 +92,7 @@ export function UserHotelDetail({
                   <h3 className="text-lg font-semibold text-slate-950">
                     房型与价格
                   </h3>
-                  <p className="mt-1 text-sm text-slate-600">
-                    房型已按价格从低到高排列。
-                  </p>
                 </div>
-                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500 ring-1 ring-slate-200">
-                  共 {hotel.roomTypes.length} 个房型
-                </span>
               </div>
 
               {hotel.roomTypes.length === 0 ? (
@@ -117,9 +111,6 @@ export function UserHotelDetail({
                           <h4 className="text-base font-semibold text-slate-950">
                             {roomType.name}
                           </h4>
-                          <p className="mt-1 text-sm text-slate-500">
-                            公开展示价格，具体预订将在下一个里程碑接入。
-                          </p>
                         </div>
                         <div className="flex items-center gap-3">
                           <div className="text-right">
@@ -136,8 +127,8 @@ export function UserHotelDetail({
                             type="button"
                           >
                             {currentUserRole === "USER"
-                              ? "Milestone 7 开放预订"
-                              : "登录后可预订"}
+                              ? "预订"
+                              : "登录"}
                           </button>
                         </div>
                       </div>
@@ -208,7 +199,7 @@ function HotelHero({ hotel }: { hotel: PublicHotelDetail }) {
       ) : (
         <div className="flex h-64 items-end bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.3),_transparent_45%),linear-gradient(135deg,_#0f172a,_#134e4a)] p-5">
           <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">
-            默认占位图
+            酒店图片暂未提供
           </span>
         </div>
       )}

@@ -95,9 +95,9 @@ export function UserHotelList({
     <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex flex-col gap-4 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-emerald-700">用户端酒店列表</p>
+          <p className="text-sm font-medium text-emerald-700">酒店列表</p>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-            已发布酒店
+            酒店列表
           </h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {summaryItems.length === 0 ? (
@@ -128,7 +128,7 @@ export function UserHotelList({
         </div>
       ) : items.length === 0 ? (
         <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
-          当前条件下没有可展示的已发布酒店。
+          当前条件下没有可展示的酒店。
         </div>
       ) : (
         <>
@@ -157,7 +157,7 @@ export function UserHotelList({
                         最低价
                       </p>
                       <p className="mt-1 text-lg font-semibold text-emerald-700">
-                        {hotel.minPrice ? `¥${hotel.minPrice}` : "待补充"}
+                        {hotel.minPrice ? `¥${hotel.minPrice}` : "暂无报价"}
                       </p>
                     </div>
                     <button
@@ -228,7 +228,7 @@ function HotelCover({
   return (
     <div className="flex h-44 w-full items-end bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.35),_transparent_48%),linear-gradient(135deg,_#0f172a,_#14532d)] p-4">
       <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/90">
-        图片待补充
+        暂无图片
       </span>
     </div>
   );

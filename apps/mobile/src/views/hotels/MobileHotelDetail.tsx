@@ -105,13 +105,6 @@ export function MobileHotelDetail({
           </InfoCard>
 
           <InfoCard title="房型与价格">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-sm text-slate-600">房型已按价格从低到高排列。</p>
-              <span className="rounded-full border border-[#ddd1bd] bg-[#faf5ec] px-3 py-1 text-xs font-semibold text-slate-700">
-                共 {hotel.roomTypes.length} 个房型
-              </span>
-            </div>
-
             {hotel.roomTypes.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-[#d9ccb7] bg-[#faf5ec] px-4 py-4 text-sm text-slate-600">
                 当前酒店暂未配置可展示房型。
@@ -128,9 +121,6 @@ export function MobileHotelDetail({
                         <h3 className="text-base font-semibold text-slate-950">
                           {roomType.name}
                         </h3>
-                        <p className="mt-1 text-sm text-slate-500">
-                          公开价格与预订入口已开放，可在下方创建基础预订记录。
-                        </p>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <div>
@@ -153,7 +143,7 @@ export function MobileHotelDetail({
                               });
                           }}
                         >
-                          去创建预订
+                          预订
                         </button>
                       </div>
                     </div>
@@ -212,7 +202,7 @@ function HotelHero({ hotel }: { hotel: PublicHotelDetail }) {
       ) : (
         <div className="flex h-56 items-end bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.16),_transparent_45%),linear-gradient(135deg,_#f6efe2,_#e9dcc2)] p-5">
           <span className="rounded-full border border-[#ddd1bd] bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700">
-            默认占位图
+            酒店图片暂未提供
           </span>
         </div>
       )}

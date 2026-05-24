@@ -24,31 +24,8 @@ export function UserHotelSearch({
   }
 
   return (
-    <section className="overflow-hidden rounded-[28px] border border-emerald-100 bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-800 text-white shadow-xl shadow-emerald-950/15">
-      <div className="grid gap-6 px-5 py-6 sm:px-7 sm:py-7 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,420px)] lg:items-end">
-        <div className="space-y-4">
-          <span className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-emerald-100">
-            EASYSTAY MVP
-          </span>
-          <div className="space-y-3">
-            <h2 className="max-w-xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              只看已发布酒店的轻量查询入口
-            </h2>
-            <p className="max-w-2xl text-sm leading-6 text-emerald-50/85 sm:text-base">
-              按城市、地点或关键字搜索酒店，再带着入住日期进入列表和详情。当前里程碑只实现查询与浏览，不创建预订。
-            </p>
-          </div>
-          <div className="grid gap-3 text-sm text-emerald-50/85 sm:grid-cols-3">
-            <FeaturePill label="城市 / 地点" />
-            <FeaturePill label="关键字检索" />
-            <FeaturePill label="详情看房型" />
-          </div>
-        </div>
-
-        <form
-          className="rounded-[24px] border border-white/10 bg-white/95 p-4 text-slate-900 shadow-2xl shadow-emerald-950/10 backdrop-blur"
-          onSubmit={handleSubmit}
-        >
+    <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <form onSubmit={handleSubmit}>
           <div className="grid gap-3">
             <Field
               label="城市或地点"
@@ -90,19 +67,10 @@ export function UserHotelSearch({
             className="mt-4 w-full rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
             type="submit"
           >
-            搜索已发布酒店
+            搜索酒店
           </button>
-        </form>
-      </div>
+      </form>
     </section>
-  );
-}
-
-function FeaturePill({ label }: { label: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3">
-      {label}
-    </div>
   );
 }
 

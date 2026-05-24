@@ -97,7 +97,7 @@ export function MobileHotelList({
         <div>
           <p className="text-sm font-medium text-emerald-700">酒店列表</p>
           <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-            已发布酒店
+            酒店列表
           </h2>
         </div>
         <button
@@ -129,7 +129,7 @@ export function MobileHotelList({
         </div>
       ) : items.length === 0 ? (
         <div className="mt-4 rounded-2xl border border-dashed border-[#d9ccb7] bg-[#faf5ec] p-5 text-sm text-slate-600">
-          当前筛选条件下没有可展示的已发布酒店。
+          当前筛选条件下没有可展示的酒店。
         </div>
       ) : (
         <>
@@ -159,7 +159,7 @@ export function MobileHotelList({
                         最低价
                       </p>
                       <p className="mt-1 text-xl font-semibold text-emerald-700">
-                        {hotel.minPrice ? `￥${hotel.minPrice}` : "待补充"}
+                        {hotel.minPrice ? `￥${hotel.minPrice}` : "暂无报价"}
                       </p>
                     </div>
                     <button
@@ -230,7 +230,7 @@ function HotelCover({
   return (
     <div className="flex h-44 w-full items-end bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.16),_transparent_46%),linear-gradient(135deg,_#f6efe2,_#ecdfc8)] p-4">
       <span className="rounded-full border border-[#ddd1bd] bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700">
-        图片待补充
+        暂无图片
       </span>
     </div>
   );

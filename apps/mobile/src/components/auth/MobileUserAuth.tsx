@@ -38,18 +38,10 @@ export function MobileUserAuth({
 
   return (
     <section className="rounded-[30px] border border-[#e4d9c5] bg-white shadow-sm shadow-[#d8ccb7]/35">
-      <div className="flex items-start justify-between gap-4 border-b border-[#efe5d6] bg-[linear-gradient(180deg,#faf4e7_0%,#f4ebdb_100%)] px-5 py-5">
-        <div>
-          <span className="inline-flex rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold tracking-[0.2em] text-emerald-700">
-            USER AUTH
-          </span>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
-            普通用户登录与注册
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            游客可以继续浏览酒店；只有普通用户登录后才能创建预订记录。
-          </p>
-        </div>
+      <div className="flex items-center justify-between gap-4 border-b border-[#efe5d6] px-5 py-4">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+          登录 / 注册
+        </h2>
         {onClose ? (
           <button
             className="rounded-2xl border border-[#d9ccb7] bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-[#fff8ee]"
@@ -99,12 +91,6 @@ export function MobileUserAuth({
             value={password}
             onChange={(value) => setPassword(value)}
           />
-
-          <div className="rounded-2xl border border-[#efe5d6] bg-[#faf5ec] px-4 py-3 text-sm text-slate-600">
-            {mode === "login"
-              ? "登录后可以在酒店详情页选择房型并创建预订记录。"
-              : "这里只注册普通用户账号，不开放商户或管理员注册。"}
-          </div>
 
           {error ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

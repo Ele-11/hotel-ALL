@@ -30,6 +30,12 @@ jest.mock("./stores/auth-store", () => ({
   }),
 }));
 
+jest.mock("./config/app", () => ({
+  API_BASE_URL: "http://localhost:3000",
+  MOBILE_APP_URL: "http://localhost:5174",
+  TOKEN_STORAGE_KEY: "hotel_auth_token",
+}));
+
 jest.mock("./components/auth/AuthForm", () => ({
   AuthForm: () => <div>AuthForm</div>,
 }));
@@ -65,6 +71,16 @@ describe("web portal shell", () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain("AuthForm");
+    expect(html).toContain("\u5546\u6237\u4e0e\u7ba1\u7406\u5458\u540e\u53f0");
+    expect(html).not.toContain("\u6253\u5f00\u79fb\u52a8\u7aef\uff1a");
+    expect(html).not.toContain("\u8fdb\u5165\u7528\u6237\u7aef");
+    expect(html).not.toContain("\u5355\u72ec\u8fd0\u884c");
+    expect(html).not.toContain("\u8bf7\u9009\u62e9\u540e\u53f0\u8eab\u4efd");
+    expect(html).not.toContain("\u4f7f\u7528\u8bf4\u660e");
+    expect(html).not.toContain("\u7528\u6237\u9884\u8ba2");
+    expect(html).not.toContain("\u89d2\u8272\u8fb9\u754c");
+    expect(html).not.toContain("\u7cfb\u7edf\u9884\u7f6e");
+    expect(html).not.toContain("EASYSTAY PORTAL");
     expect(html).not.toContain("UserHotelSearch");
     expect(html).not.toContain("UserHotelList");
     expect(html).not.toContain("UserHotelDetail");
@@ -110,7 +126,7 @@ describe("web portal shell", () => {
     expect(html).not.toContain("AuthForm");
   });
 
-  test("user portal redirects user-facing access to the mobile app entry", () => {
+  test("user portal shows a backend permission error only", () => {
     storeState.currentUser = {
       id: 3,
       username: "user01",
@@ -119,8 +135,15 @@ describe("web portal shell", () => {
 
     const html = renderToStaticMarkup(<App />);
 
-    expect(html).toContain("http://localhost:5174");
-    expect(html).toContain("\u524d\u5f80\u79fb\u52a8\u7aef");
+    expect(html).toContain("\u5f53\u524d\u8d26\u53f7\u65e0\u540e\u53f0\u8bbf\u95ee\u6743\u9650");
+    expect(html).toContain("\u5207\u6362\u8d26\u53f7");
+    expect(html).not.toContain("http://localhost:5174");
+    expect(html).not.toContain("\u8fdb\u5165\u7528\u6237\u7aef");
+    expect(html).not.toContain("\u6253\u5f00\u79fb\u52a8\u7aef\uff1a");
+    expect(html).not.toContain("\u5355\u72ec\u8fd0\u884c");
+    expect(html).not.toContain("\u62c6\u5206");
+    expect(html).not.toContain("\u4f7f\u7528\u8bf4\u660e");
+    expect(html).not.toContain("Milestone");
     expect(html).not.toContain("MerchantHotelManager");
     expect(html).not.toContain("AdminHotelAuditManager");
   });

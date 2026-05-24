@@ -81,14 +81,10 @@ export function MobileBookingPanel({
     <section className="rounded-[24px] border border-[#d8ccb7] bg-[linear-gradient(180deg,#fffdfa_0%,#f6efe2_100%)] p-4 shadow-sm shadow-[#d8ccb7]/25">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-emerald-700">基础预订</p>
           <h3 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
-            选择房型并创建记录
+            预订
           </h3>
         </div>
-        <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-700">
-          M7
-        </span>
       </div>
 
       <div className="mt-4 space-y-3">
@@ -121,9 +117,6 @@ export function MobileBookingPanel({
                   <div>
                     <p className="text-base font-semibold text-slate-950">
                       {roomType.name}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      每晚价格按后端口径结算。
                     </p>
                   </div>
                   <div className="text-right">
@@ -168,9 +161,6 @@ export function MobileBookingPanel({
             {estimatedTotal ? `￥${estimatedTotal}` : "等待日期与房型"}
           </span>
         </div>
-        <p className="mt-2 text-sm leading-6 text-slate-500">
-          实际写入的总价由后端根据房型价格与间夜数计算，不使用前端硬编码值。
-        </p>
       </div>
 
       {!hotel.checkInDate || !hotel.checkOutDate || hotel.nights <= 0 ? (
@@ -180,16 +170,13 @@ export function MobileBookingPanel({
       ) : null}
 
       {!currentUser ? (
-        <div className="mt-4 rounded-2xl border border-[#ddd1bd] bg-white px-4 py-4">
-          <p className="text-sm leading-6 text-slate-600">
-            当前以游客身份浏览。登录普通用户账号后才能提交预订记录。
-          </p>
+        <div className="mt-4">
           <button
-            className="mt-3 w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+            className="w-full rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
             type="button"
             onClick={onRequireAuth}
           >
-            登录后创建预订
+            登录
           </button>
         </div>
       ) : currentUser.role !== "USER" ? (
@@ -206,7 +193,7 @@ export function MobileBookingPanel({
 
       {successBooking ? (
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          预订创建成功：#{successBooking.id}，共 {successBooking.guestCount} 人，
+          预订成功：#{successBooking.id}，共 {successBooking.guestCount} 人，
           总价 ￥{successBooking.totalPrice}。
         </div>
       ) : null}
@@ -217,7 +204,7 @@ export function MobileBookingPanel({
         type="button"
         onClick={() => void handleSubmit()}
       >
-        {isSubmitting ? "正在创建预订..." : "创建基础预订记录"}
+        {isSubmitting ? "正在创建预订..." : "创建预订"}
       </button>
     </section>
   );
