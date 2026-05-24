@@ -53,7 +53,7 @@
 - 权限控制逻辑
 
 ## 开发规则
-
+- 凡是用户提到“实现 Milestone X / 验证 Milestone X / PR Milestone X”，默认使用 .agents/skills/milestone-superpowers-workflow
 - 一次只实现一个 Milestone。
 - 每次实现Milestone时，先确保从远程仓库拉取最新的代码，然后都必须新建一个Milestone分支来开发。
 - 不要提前实现后续 Milestone。
