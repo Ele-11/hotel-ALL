@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useAuthStore } from "../store/auth-store";
-import type { Role } from "../types/auth";
+import { useAuthStore } from "../../stores/auth-store";
+import type { Role } from "../../types/auth";
 
 type AuthMode = "login" | "register";
 

@@ -6,9 +6,9 @@ import {
   offlineAuditHotel,
   publishAuditHotel,
   rejectAuditHotel,
-} from '../lib/api'
-import type { AdminHotel } from '../types/admin'
-import type { HotelStatus } from '../types/merchant'
+} from '../../apis'
+import type { AdminHotel } from '../../types/admin'
+import type { HotelStatus } from '../../types/merchant'
 
 const filterOptions: Array<{ label: string; value: HotelStatus | 'ALL' }> = [
   { label: '全部状态', value: 'ALL' },

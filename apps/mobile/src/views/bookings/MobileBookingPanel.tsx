@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { createBooking, getApiErrorMessage } from "../lib/api";
-import type { BookingRecord } from "../types/booking";
-import type { CurrentUser } from "../types/auth";
-import type { PublicHotelDetail } from "../types/hotel";
+import { createBooking, getApiErrorMessage } from "../../apis";
+import type { BookingRecord } from "../../types/booking";
+import type { CurrentUser } from "../../types/auth";
+import type { PublicHotelDetail } from "../../types/hotel";
 
 type MobileBookingPanelProps = {
   currentUser: CurrentUser | null;

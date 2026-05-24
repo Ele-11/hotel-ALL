@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { MobileBookingPanel } from "./MobileBookingPanel";
-import { getApiErrorMessage, getPublicHotelDetail } from "../lib/api";
-import type { CurrentUser } from "../types/auth";
-import type { HotelSearchParams, PublicHotelDetail } from "../types/hotel";
+import { getApiErrorMessage, getPublicHotelDetail } from "../../apis";
+import type { CurrentUser } from "../../types/auth";
+import type { HotelSearchParams, PublicHotelDetail } from "../../types/hotel";
+import { MobileBookingPanel } from "../bookings/MobileBookingPanel";
 
 type MobileHotelDetailProps = {
   currentUser: CurrentUser | null;

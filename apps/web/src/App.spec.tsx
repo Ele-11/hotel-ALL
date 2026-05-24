@@ -20,7 +20,7 @@ const storeState: {
   status: "idle",
 };
 
-jest.mock("./store/auth-store", () => ({
+jest.mock("./stores/auth-store", () => ({
   useAuthStore: () => ({
     currentUser: storeState.currentUser,
     logout: jest.fn(),
@@ -30,27 +30,27 @@ jest.mock("./store/auth-store", () => ({
   }),
 }));
 
-jest.mock("./components/AuthForm", () => ({
+jest.mock("./components/auth/AuthForm", () => ({
   AuthForm: () => <div>AuthForm</div>,
 }));
 
-jest.mock("./components/MerchantHotelManager", () => ({
+jest.mock("./views/merchant/MerchantHotelManager", () => ({
   MerchantHotelManager: () => <div>MerchantHotelManager</div>,
 }));
 
-jest.mock("./components/AdminHotelAuditManager", () => ({
+jest.mock("./views/admin/AdminHotelAuditManager", () => ({
   AdminHotelAuditManager: () => <div>AdminHotelAuditManager</div>,
 }));
 
-jest.mock("./components/UserHotelSearch", () => ({
+jest.mock("./views/user/UserHotelSearch", () => ({
   UserHotelSearch: () => <div>UserHotelSearch</div>,
 }));
 
-jest.mock("./components/UserHotelList", () => ({
+jest.mock("./views/user/UserHotelList", () => ({
   UserHotelList: () => <div>UserHotelList</div>,
 }));
 
-jest.mock("./components/UserHotelDetail", () => ({
+jest.mock("./views/user/UserHotelDetail", () => ({
   UserHotelDetail: () => <div>UserHotelDetail</div>,
 }));
 

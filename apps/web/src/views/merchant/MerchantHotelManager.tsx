@@ -7,14 +7,14 @@ import {
   getMerchantHotels,
   updateMerchantHotel,
   updateMerchantRoom,
-} from '../lib/api'
+} from '../../apis'
 import type {
   HotelStatus,
   MerchantHotel,
   MerchantHotelInput,
   MerchantRoom,
   MerchantRoomInput,
-} from '../types/merchant'
+} from '../../types/merchant'
 
 type HotelFormState = {
   nameCn: string

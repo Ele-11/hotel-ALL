@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { getApiErrorMessage, getPublicHotels } from "../lib/api";
-import type { HotelSearchParams, PublicHotelListItem } from "../types/hotel";
+import { getApiErrorMessage, getPublicHotels } from "../../apis";
+import type { HotelSearchParams, PublicHotelListItem } from "../../types/hotel";
 
 type UserHotelListProps = {
   onBack: () => void;

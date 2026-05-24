@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import type { HotelSearchParams } from "../types/hotel";
+import type { HotelSearchParams } from "../../types/hotel";
 
 type UserHotelSearchProps = {
   initialValue: HotelSearchParams;

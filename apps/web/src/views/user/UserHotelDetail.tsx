@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { getApiErrorMessage, getPublicHotelDetail } from "../lib/api";
-import type { HotelSearchParams, PublicHotelDetail } from "../types/hotel";
+import { getApiErrorMessage, getPublicHotelDetail } from "../../apis";
+import type { HotelSearchParams, PublicHotelDetail } from "../../types/hotel";
 
 type UserHotelDetailProps = {
   currentUserRole: "guest" | "USER";

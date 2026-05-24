@@ -5,7 +5,7 @@ import {
   loginAccount,
   registerAccount,
   TOKEN_STORAGE_KEY,
-} from '../lib/api'
+} from '../apis'
 import type { CurrentUser, Role } from '../types/auth'
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'error'
