@@ -1,0 +1,4 @@
+interface:
+  display_name: "Milestone Superpowers 工作流"
+  short_description: "按固定流程推进 hotel-All 的 Milestone。"
+  default_prompt: "使用 $milestone-superpowers-workflow 来规划、实现、验证、Review 并发布当前 Milestone。"

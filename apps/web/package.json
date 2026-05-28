@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "typecheck": "tsc -b --pretty false",
-    "test": "echo \"No tests configured for web\"",
+    "test": "node ../api/node_modules/jest/bin/jest.js --config ./jest.config.cjs --runInBand",
     "preview": "vite preview"
   },
   "dependencies": {

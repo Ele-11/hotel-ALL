@@ -1,0 +1,237 @@
+import { useEffect, useMemo, useState } from "react";
+import { getApiErrorMessage, getPublicHotels } from "../../apis";
+import type { HotelSearchParams, PublicHotelListItem } from "../../types/hotel";
+
+type MobileHotelListProps = {
+  onBack: () => void;
+  onSelectHotel: (hotelId: number) => void;
+  searchParams: HotelSearchParams;
+};
+
+const PAGE_SIZE = 6;
+
+export function MobileHotelList({
+  onBack,
+  onSelectHotel,
+  searchParams,
+}: MobileHotelListProps) {
+  const [items, setItems] = useState<PublicHotelListItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const queryKey = JSON.stringify(searchParams);
+  const hasMore = items.length < total;
+  const summaryItems = useMemo(
+    () =>
+      [
+        searchParams.city ? `地点：${searchParams.city}` : null,
+        searchParams.keyword ? `关键词：${searchParams.keyword}` : null,
+        searchParams.checkInDate ? `入住：${searchParams.checkInDate}` : null,
+        searchParams.checkOutDate ? `离店：${searchParams.checkOutDate}` : null,
+      ].filter(Boolean) as string[],
+    [searchParams],
+  );
+
+  useEffect(() => {
+    let isActive = true;
+
+    getPublicHotels({
+      ...searchParams,
+      page: 1,
+      pageSize: PAGE_SIZE,
+    })
+      .then((data) => {
+        if (!isActive) {
+          return;
+        }
+
+        setError(null);
+        setItems(data.items);
+        setTotal(data.total);
+        setPage(1);
+      })
+      .catch((loadError: unknown) => {
+        if (isActive) {
+          setError(getApiErrorMessage(loadError));
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [queryKey, searchParams]);
+
+  async function handleLoadMore() {
+    const nextPage = page + 1;
+
+    setIsLoadingMore(true);
+    setError(null);
+
+    try {
+      const data = await getPublicHotels({
+        ...searchParams,
+        page: nextPage,
+        pageSize: PAGE_SIZE,
+      });
+      setItems((current) => [...current, ...data.items]);
+      setPage(nextPage);
+      setTotal(data.total);
+    } catch (loadError) {
+      setError(getApiErrorMessage(loadError));
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }
+
+  return (
+    <section className="rounded-[30px] border border-[#e4d9c5] bg-white p-4 shadow-sm shadow-[#d8ccb7]/35">
+      <div className="flex items-start justify-between gap-3 border-b border-[#efe5d6] pb-4">
+        <div>
+          <p className="text-sm font-medium text-emerald-700">酒店列表</p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+            酒店列表
+          </h2>
+        </div>
+        <button
+          className="rounded-2xl border border-[#d9ccb7] bg-[#faf5ec] px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-[#f3eadb]"
+          type="button"
+          onClick={onBack}
+        >
+          返回搜索
+        </button>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {summaryItems.length === 0 ? (
+          <FilterChip label="未设置筛选条件" />
+        ) : (
+          summaryItems.map((item) => <FilterChip key={item} label={item} />)
+        )}
+      </div>
+
+      {error ? (
+        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+
+      {isLoading ? (
+        <div className="mt-4 rounded-2xl border border-[#e6dccb] bg-[#faf5ec] p-5 text-sm text-slate-600">
+          正在加载酒店列表...
+        </div>
+      ) : items.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-[#d9ccb7] bg-[#faf5ec] p-5 text-sm text-slate-600">
+          当前筛选条件下没有可展示的酒店。
+        </div>
+      ) : (
+        <>
+          <div className="mt-4 space-y-4">
+            {items.map((hotel) => (
+              <article
+                className="overflow-hidden rounded-[24px] border border-[#e6dccb] bg-[#fffdfa] shadow-sm"
+                key={hotel.id}
+              >
+                <HotelCover imageUrl={hotel.imageUrl} name={hotel.nameCn} />
+                <div className="space-y-4 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-950">
+                        {hotel.nameCn}
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {hotel.address}
+                      </p>
+                    </div>
+                    <StarTag value={hotel.starRating} />
+                  </div>
+
+                  <div className="flex items-end justify-between gap-3 rounded-[20px] bg-[#f7f0e3] px-4 py-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                        最低价
+                      </p>
+                      <p className="mt-1 text-xl font-semibold text-emerald-700">
+                        {hotel.minPrice ? `￥${hotel.minPrice}` : "暂无报价"}
+                      </p>
+                    </div>
+                    <button
+                      className="rounded-2xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                      type="button"
+                      onClick={() => onSelectHotel(hotel.id)}
+                    >
+                      查看详情
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 rounded-[24px] border border-[#e6dccb] bg-[#faf5ec] px-4 py-4">
+            <p className="text-sm text-slate-600">
+              已展示 {items.length} / {total} 家酒店
+            </p>
+            {hasMore ? (
+              <button
+                className="rounded-2xl border border-[#d9ccb7] bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-[#fff8ee] disabled:cursor-not-allowed disabled:text-slate-400"
+                disabled={isLoadingMore}
+                type="button"
+                onClick={() => void handleLoadMore()}
+              >
+                {isLoadingMore ? "加载中..." : "加载更多"}
+              </button>
+            ) : (
+              <span className="text-sm text-slate-500">已经到底了</span>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function FilterChip({ label }: { label: string }) {
+  return (
+    <span className="rounded-full border border-[#ddd1bd] bg-[#faf5ec] px-3 py-1 text-xs font-semibold text-slate-700">
+      {label}
+    </span>
+  );
+}
+
+function StarTag({ value }: { value: number }) {
+  return (
+    <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+      {value} 星
+    </span>
+  );
+}
+
+function HotelCover({
+  imageUrl,
+  name,
+}: {
+  imageUrl: string | null;
+  name: string;
+}) {
+  if (imageUrl) {
+    return (
+      <img alt={name} className="h-44 w-full object-cover" src={imageUrl} />
+    );
+  }
+
+  return (
+    <div className="flex h-44 w-full items-end bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.16),_transparent_46%),linear-gradient(135deg,_#f6efe2,_#ecdfc8)] p-4">
+      <span className="rounded-full border border-[#ddd1bd] bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700">
+        暂无图片
+      </span>
+    </div>
+  );
+}

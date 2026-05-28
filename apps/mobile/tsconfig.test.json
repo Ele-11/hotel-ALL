@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "types": ["jest", "node", "vite/client"],
+    "verbatimModuleSyntax": false
+  },
+  "include": ["src"]
+}
